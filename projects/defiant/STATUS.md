@@ -2,7 +2,7 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** Step 6 — XIAO pin map  
+**Current phase:** Step 7 — master wire list  
 **Drawing gate:** **CLOSED**
 
 ## Workflow progress
@@ -12,58 +12,64 @@
 | 1. Reconstruct purchased BOM | **COMPLETE enough to proceed** |
 | 2. Identify part numbers/packages/carriers | **COMPLETE enough to proceed** |
 | 3. Freeze electrical architecture | **COMPLETE — FROZEN v1.0** |
-| 4. Freeze reference designators | **COMPLETE — FROZEN v1.0** |
-| 5. Formal netlist | **COMPLETE enough to proceed — FORMAL v1.0** in `NETLIST.md`; drawing approval waits on physical/pin validation |
-| 6. XIAO pin map | **NEXT** |
-| 7. Master wire list | partial only |
-| 8. Per-module pin tables | partial only |
-| 9. Validation | active; release blockers remain |
+| 4. Freeze reference designators | **COMPLETE — FROZEN v1.1** |
+| 5. Formal netlist | **COMPLETE enough to proceed — FORMAL v1.1** |
+| 6. XIAO pin map | **COMPLETE — FROZEN v1.0** |
+| 7. Master wire list | **NEXT** |
+| 8. Per-module pin tables | partial; update after Step 7 |
+| 9. Validation | active; bench blockers remain |
 | 10+. Drawings/layout/firmware | gated |
 
-## Step-5 formal netlist highlights
+## Frozen XIAO assignment
 
-- D1 orientation is fixed: `WLC_5V_RAW` -> D1 anode; D1 cathode -> `SYS_5V_IN` -> U1 5 V input.
-- `WLC_PRESENT` divider is R1 130 kΩ / R2 180 kΩ, subject to final RX1 voltage measurement.
-- Q1/Q2 lighting power gate topology and default-OFF resistor network are fully defined.
-- U2 functional IN+/IN-/OUT+/OUT- nets are defined.
-- U4 is fully pinned; OE is tied low, VCC is switched 5 V, C1 = 0.1 µF local bypass, R5 = 330 Ω SK data-series resistor.
-- Physical SK6812 chain is `LED14+` in one serial chain; exact count/order remains open.
-- Q3–Q6 phaser channels are fully defined except R6–R9 values, which depend on the exact prewired LED configuration.
-- Q7/Q8/Q9 hardware implements `NFC_POWER = PERIPH_EN AND NOT WLC_PRESENT` without another MCU pin.
-- MFRC522 uses only SCK/MOSI/MISO/CS; IRQ is NC; reset is supply-biased rather than MCU-controlled.
-- The exact 11 functional MCU signals are now fixed for Step 6.
+| XIAO pin | GPIO | Signal |
+|---|---:|---|
+| D0 | GPIO2 | `NFC_MISO` |
+| D1 | GPIO3 | `WLC_PRESENT` |
+| D2 | GPIO4 | `PH0_GATE` |
+| D3 | GPIO5 | `PH1_GATE` |
+| D4 | GPIO6 | `PH2_GATE` |
+| D5 | GPIO7 | `PH3_GATE` |
+| D6 | GPIO21 | `NFC_CS` |
+| D7 | GPIO20 | `PERIPH_EN` |
+| D8 | GPIO8 | `NFC_SCK` |
+| D9 | GPIO9 | `SK_DATA_RAW` |
+| D10 | GPIO10 | `NFC_MOSI` |
+
+Step 6 added `R18 = 10 kΩ` from D0/GPIO2 (`NFC_MISO`) to `+3V3_ALWAYS` to preserve the recommended GPIO2 boot-high bias.
 
 ## Frozen architecture summary
 
-- U1 XIAO ESP32-C3 remains permanently connected to BT1.
-- RX1 wireless power feeds U1 charging/recovery through isolation and provides `WLC_PRESENT` wake/inhibit sensing.
-- One `PERIPH_EN` GPIO controls the high-draw subsystem architecture.
-- U2 is physically disconnected from BAT+ during sleep.
-- `+5V_LIGHT_SW` powers one SK6812 serial bus, U4, and the four phaser LED branches.
-- U3 MFRC522 is supplied from separately switched 3.3 V and hardware-inhibited while wireless charging is present.
-- Total required U1 GPIO budget is exactly 11.
-- No GPIO expander, touch module, audio, second SK6812 data bus, reed wake, or NTC monitoring is part of the frozen architecture.
-- Battery protection remains mandatory; U5 is reserved/DNP unless BT1 proves unprotected.
+- U1 XIAO stays permanently connected to BT1.
+- RX1 feeds U1 charging/recovery through D1 and provides `WLC_PRESENT` wake.
+- Q1/Q2 physically disconnect U2/5 V lighting from battery in sleep.
+- One SK6812 serial bus uses U4 SN74AHCT1G125 level translation.
+- Q3–Q6 independently switch the four pulse-phaser LEDs.
+- Q7/Q8/Q9 control and inhibit the switched MFRC522 3.3 V rail.
+- NFC cannot operate while wireless charging is present.
+- No GPIO expander, touch module, audio, second SK bus, reed wake, or NTC monitoring.
 
-## Open implementation checks
+## Remaining physical blockers before drawing release
 
 1. BT1 protection status.
-2. Exact RX1 board/pad identity and measured output.
-3. Exact U2 module/pads and 5 V load behavior.
-4. Exact U3 module/header/reset behavior.
-5. Prewired phaser LED electrical specification / R6–R9 value.
+2. RX1 exact pads and measured output/current.
+3. U2 exact module/pads and load-tested 5 V output.
+4. U3 exact module/header/reset behavior and unpowered-I/O behavior.
+5. Prewired phaser LED current/resistor configuration.
 6. Physical SK6812 emitter count/order.
-7. Final XIAO GPIO assignment and boot validation.
-8. Backfeed/default-off tests.
+7. Repeated boot tests for D0/GPIO2, D8/GPIO8 and especially D9/GPIO9 with peripherals attached.
+8. D1/GPIO3 wireless wake test.
+9. Backfeed/default-off tests.
+10. OTA/control tests before closure.
+
+`VALIDATION.md` remains authoritative for blocker severity.
 
 ## Drawing release criteria
 
-The drawing gate opens only when all of the following are true:
+The drawing gate opens only when:
 
-- `POWER-ARCHITECTURE.md` remains **FROZEN**.
-- `DESIGNATORS.md` remains **FROZEN**.
-- `NETLIST.md` is **APPROVED**.
-- `PINOUT.md` has no duplicate GPIO or boot-state conflicts.
-- `CONNECTIONS.md` defines every component pin.
-- `WIRE-LIST.md` covers every applicable off-board connection.
-- `VALIDATION.md` has no unresolved ERROR items.
+- architecture/designators/pinout remain frozen;
+- `NETLIST.md` is drawing-approved;
+- `CONNECTIONS.md` defines every component pin;
+- `WIRE-LIST.md` covers every applicable off-board connection;
+- `VALIDATION.md` has no unresolved ERROR and no unaccepted hardware-critical blocker.
