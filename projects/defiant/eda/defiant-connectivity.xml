@@ -1,0 +1,296 @@
+<electrical-design name="USS Defiant 1/1000" revision="1.0" generator="OpenAI semantic EDA generator">
+  <metadata>
+    <item key="architecture" value="POWER-ARCHITECTURE.md v1.2" />
+    <item key="netlist" value="NETLIST.md v1.5" />
+    <item key="pinout" value="PINOUT.md v1.0" />
+    <item key="lighting-layout" value="LIGHTING-LAYOUT.md v1.0" />
+    <item key="wire-list" value="WIRE-LIST.md v1.2" />
+    <item key="status" value="Generated machine-readable connectivity; KiCad output must be opened/saved and ERC run in KiCad before fabrication." />
+  </metadata>
+  <components>
+    <component ref="BT1" part="103450 LiPo 3.7V 2500mAh" sheet="power" status="active" note="U5 must replace direct protected-pack branch if BT1 is proven unprotected.">
+      <pin number="+" name="POS" type="power_out" side="right" status="active" net="BAT+" wire="W001" />
+      <pin number="-" name="NEG" type="power_out" side="right" status="active" net="GND" wire="W002" />
+    </component>
+    <component ref="U5" part="Optional 1S LiPo protection" sheet="power" status="dnp" note="DNP unless BT1 is unprotected; then revise direct BT1 connections before build.">
+      <pin number="B+" name="B+" type="power_in" side="left" status="conditional" net="CELL+" wire="W003" />
+      <pin number="B-" name="B-" type="power_in" side="left" status="conditional" net="CELL-" wire="W004" />
+      <pin number="P+" name="P+" type="power_out" side="right" status="conditional" net="BAT+" wire="W005" />
+      <pin number="P-" name="P-" type="power_out" side="right" status="conditional" net="GND" wire="W006" />
+    </component>
+    <component ref="RX1" part="XKT-3168 wireless receiver 5V/2A" sheet="power" status="active">
+      <pin number="+" name="DC+" type="power_out" side="right" status="active" net="WLC_5V_RAW" wire="W008" />
+      <pin number="-" name="DC-" type="power_out" side="right" status="active" net="GND" wire="W009" />
+    </component>
+    <component ref="D1" part="PMEG2010ER Schottky" sheet="power" status="active" note="Pin 1 is cathode/bar; pin 2 is anode.">
+      <pin number="2" name="A" type="passive" side="left" status="active" net="WLC_5V_RAW" wire="W008" />
+      <pin number="1" name="K" type="passive" side="right" status="active" net="SYS_5V_IN" wire="W010" />
+    </component>
+    <component ref="R1" part="130k" sheet="power" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="WLC_5V_RAW" wire="W011" />
+      <pin number="2" name="2" type="passive" side="right" status="active" net="WLC_PRESENT" />
+    </component>
+    <component ref="R2" part="180k" sheet="power" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="WLC_PRESENT" wire="W012" />
+      <pin number="2" name="2" type="passive" side="right" status="active" net="GND" />
+    </component>
+    <component ref="Q1" part="AO3401A P-MOS" sheet="power" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="LIGHT_GATE" />
+      <pin number="2" name="S" type="passive" side="left" status="active" net="BAT+" wire="W007" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="U2_VIN_SW" wire="W014" />
+    </component>
+    <component ref="Q2" part="AO3400A N-MOS" sheet="power" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="PERIPH_EN" wire="W018" />
+      <pin number="2" name="S" type="passive" side="right" status="active" net="GND" wire="W020" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="LIGHT_GATE" wire="W019" />
+    </component>
+    <component ref="R3" part="100k" sheet="power" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="BAT+" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="LIGHT_GATE" />
+    </component>
+    <component ref="R4" part="100k" sheet="power" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="PERIPH_EN" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="U2" part="MT3608 boost module" sheet="power" status="active">
+      <pin number="VIN+" name="VIN+" type="power_in" side="left" status="active" net="U2_VIN_SW" wire="W014" />
+      <pin number="VIN-" name="VIN-" type="power_in" side="left" status="active" net="GND" wire="W015" />
+      <pin number="VOUT+" name="VOUT+" type="power_out" side="right" status="active" net="+5V_LIGHT_SW" wire="W016" />
+      <pin number="VOUT-" name="VOUT-" type="power_out" side="right" status="active" net="GND" wire="W017" />
+    </component>
+    <component ref="U1" part="Seeed Studio XIAO ESP32-C3" sheet="controller" status="active">
+      <pin number="BAT+" name="BAT+" type="power_in" side="left" status="active" net="BAT+" wire="W001" />
+      <pin number="BAT-" name="BAT-" type="power_in" side="left" status="active" net="GND" wire="W002" />
+      <pin number="5V" name="5V/VBUS" type="power_in" side="left" status="active" net="SYS_5V_IN" wire="W010" />
+      <pin number="3V3" name="3V3" type="power_out" side="right" status="active" net="+3V3_ALWAYS" wire="W050" />
+      <pin number="D0" name="GPIO2 / D0" type="input" side="left" status="active" net="NFC_MISO" wire="W046" />
+      <pin number="D1" name="GPIO3 / D1" type="input" side="left" status="active" net="WLC_PRESENT" wire="W012" />
+      <pin number="D2" name="GPIO4 / D2" type="output" side="right" status="active" net="PH0_GATE" wire="W028" />
+      <pin number="D3" name="GPIO5 / D3" type="output" side="right" status="active" net="PH1_GATE" wire="W029" />
+      <pin number="D4" name="GPIO6 / D4" type="output" side="right" status="active" net="PH2_GATE" wire="W030" />
+      <pin number="D5" name="GPIO7 / D5" type="output" side="right" status="active" net="PH3_GATE" wire="W031" />
+      <pin number="D6" name="GPIO21 / D6" type="output" side="right" status="active" net="NFC_CS" wire="W047" />
+      <pin number="D7" name="GPIO20 / D7" type="output" side="right" status="active" net="PERIPH_EN" wire="W018" />
+      <pin number="D8" name="GPIO8 / D8" type="output" side="right" status="active" net="NFC_SCK" wire="W044" />
+      <pin number="D9" name="GPIO9 / D9" type="output" side="right" status="active" net="SK_DATA_RAW" wire="W021" />
+      <pin number="D10" name="GPIO10 / D10" type="output" side="right" status="active" net="NFC_MOSI" wire="W045" />
+    </component>
+    <component ref="U4" part="SN74AHCT1G125DBVR" sheet="lighting" status="active">
+      <pin number="1" name="OE" type="input" side="left" status="active" net="GND" />
+      <pin number="2" name="A" type="input" side="left" status="active" net="SK_DATA_RAW" wire="W021" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" wire="W025" />
+      <pin number="4" name="Y" type="output" side="right" status="active" net="SK_DATA_5V" wire="W022" />
+      <pin number="5" name="VCC" type="power_in" side="right" status="active" net="+5V_LIGHT_SW" wire="W024" />
+    </component>
+    <component ref="C1" part="0.1uF ceramic" sheet="lighting" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="R5" part="330R" sheet="lighting" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="SK_DATA_5V" wire="W022" />
+      <pin number="2" name="2" type="passive" side="right" status="active" net="SK_DIN_FIRST" wire="W023" />
+    </component>
+    <component ref="C2" part="470uF target &gt;=6.3V" sheet="lighting" status="active" note="Final value accepted after full 14-pixel rail test.">
+      <pin number="+" name="+" type="passive" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="-" name="-" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="LED14" part="SK6812 RGBW idx 0 - P0 deflector top" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_14_15" wire="W054" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_DIN_FIRST" wire="W023" />
+    </component>
+    <component ref="LED15" part="SK6812 RGBW idx 1 - P0 deflector bottom" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_15_16" wire="W055" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_14_15" wire="W054" />
+    </component>
+    <component ref="LED16" part="SK6812 RGBW idx 2 - P1 port bussard" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_16_17" wire="W056" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_15_16" wire="W055" />
+    </component>
+    <component ref="LED17" part="SK6812 RGBW idx 3 - P3 port chiller F" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_17_18" wire="W057" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_16_17" wire="W056" />
+    </component>
+    <component ref="LED18" part="SK6812 RGBW idx 4 - P3 port chiller A" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_18_19" wire="W058" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_17_18" wire="W057" />
+    </component>
+    <component ref="LED19" part="SK6812 RGBW idx 5 - P5 port crystal A" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_19_20" wire="W059" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_18_19" wire="W058" />
+    </component>
+    <component ref="LED20" part="SK6812 RGBW idx 6 - P5 port crystal B" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_20_21" wire="W060" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_19_20" wire="W059" />
+    </component>
+    <component ref="LED21" part="SK6812 RGBW idx 7 - P7 port impulse engine" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_21_22" wire="W061" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_20_21" wire="W060" />
+    </component>
+    <component ref="LED22" part="SK6812 RGBW idx 8 - P8 stbd impulse engine" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_22_23" wire="W062" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_21_22" wire="W061" />
+    </component>
+    <component ref="LED23" part="SK6812 RGBW idx 9 - P6 stbd crystal B" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_23_24" wire="W063" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_22_23" wire="W062" />
+    </component>
+    <component ref="LED24" part="SK6812 RGBW idx 10 - P6 stbd crystal A" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_24_25" wire="W064" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_23_24" wire="W063" />
+    </component>
+    <component ref="LED25" part="SK6812 RGBW idx 11 - P4 stbd chiller A" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_25_26" wire="W065" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_24_25" wire="W064" />
+    </component>
+    <component ref="LED26" part="SK6812 RGBW idx 12 - P4 stbd chiller F" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="active" net="SK_26_27" wire="W066" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_25_26" wire="W065" />
+    </component>
+    <component ref="LED27" part="SK6812 RGBW idx 13 - P2 stbd bussard" sheet="lighting" status="active">
+      <pin number="1" name="VDD" type="power_in" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="DOUT" type="output" side="right" status="nc" />
+      <pin number="3" name="GND" type="power_in" side="left" status="active" net="GND" />
+      <pin number="4" name="DIN" type="input" side="left" status="active" net="SK_26_27" wire="W066" />
+    </component>
+    <component ref="R6" part="150R &gt;=1/8W" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="2" type="passive" side="right" status="active" net="PH0_LED_ANODE" wire="W032" />
+    </component>
+    <component ref="LED10" part="DiCUNO white 0805" sheet="phasers" status="active">
+      <pin number="1" name="A" type="passive" side="left" status="active" net="PH0_LED_ANODE" wire="W032" />
+      <pin number="2" name="K" type="passive" side="right" status="active" net="PH0_SINK" wire="W033" />
+    </component>
+    <component ref="Q3" part="AO3400A N-MOS" sheet="phasers" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="PH0_GATE" wire="W028" />
+      <pin number="2" name="S" type="passive" side="right" status="active" net="GND" wire="W034" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="PH0_SINK" wire="W033" />
+    </component>
+    <component ref="R10" part="100k" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="PH0_GATE" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="R7" part="150R &gt;=1/8W" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="2" type="passive" side="right" status="active" net="PH1_LED_ANODE" wire="W035" />
+    </component>
+    <component ref="LED11" part="DiCUNO white 0805" sheet="phasers" status="active">
+      <pin number="1" name="A" type="passive" side="left" status="active" net="PH1_LED_ANODE" wire="W035" />
+      <pin number="2" name="K" type="passive" side="right" status="active" net="PH1_SINK" wire="W036" />
+    </component>
+    <component ref="Q4" part="AO3400A N-MOS" sheet="phasers" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="PH1_GATE" wire="W029" />
+      <pin number="2" name="S" type="passive" side="right" status="active" net="GND" wire="W037" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="PH1_SINK" wire="W036" />
+    </component>
+    <component ref="R11" part="100k" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="PH1_GATE" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="R8" part="150R &gt;=1/8W" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="2" type="passive" side="right" status="active" net="PH2_LED_ANODE" wire="W038" />
+    </component>
+    <component ref="LED12" part="DiCUNO white 0805" sheet="phasers" status="active">
+      <pin number="1" name="A" type="passive" side="left" status="active" net="PH2_LED_ANODE" wire="W038" />
+      <pin number="2" name="K" type="passive" side="right" status="active" net="PH2_SINK" wire="W039" />
+    </component>
+    <component ref="Q5" part="AO3400A N-MOS" sheet="phasers" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="PH2_GATE" wire="W030" />
+      <pin number="2" name="S" type="passive" side="right" status="active" net="GND" wire="W040" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="PH2_SINK" wire="W039" />
+    </component>
+    <component ref="R12" part="100k" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="PH2_GATE" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="R9" part="150R &gt;=1/8W" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+5V_LIGHT_SW" />
+      <pin number="2" name="2" type="passive" side="right" status="active" net="PH3_LED_ANODE" wire="W041" />
+    </component>
+    <component ref="LED13" part="DiCUNO white 0805" sheet="phasers" status="active">
+      <pin number="1" name="A" type="passive" side="left" status="active" net="PH3_LED_ANODE" wire="W041" />
+      <pin number="2" name="K" type="passive" side="right" status="active" net="PH3_SINK" wire="W042" />
+    </component>
+    <component ref="Q6" part="AO3400A N-MOS" sheet="phasers" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="PH3_GATE" wire="W031" />
+      <pin number="2" name="S" type="passive" side="right" status="active" net="GND" wire="W043" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="PH3_SINK" wire="W042" />
+    </component>
+    <component ref="R13" part="100k" sheet="phasers" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="PH3_GATE" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="U3" part="XFW-ETLIVE V602 RC522-class reader" sheet="nfc" status="active">
+      <pin number="SDA" name="SDA/SS/CS" type="input" side="left" status="active" net="NFC_CS" wire="W047" />
+      <pin number="SCK" name="SCK" type="input" side="left" status="active" net="NFC_SCK" wire="W044" />
+      <pin number="MOSI" name="MOSI" type="input" side="left" status="active" net="NFC_MOSI" wire="W045" />
+      <pin number="MISO" name="MISO" type="output" side="right" status="active" net="NFC_MISO" wire="W046" />
+      <pin number="IRQ" name="IRQ" type="output" side="right" status="nc" />
+      <pin number="GND" name="GND" type="power_in" side="left" status="active" net="GND" wire="W049" />
+      <pin number="RST" name="RST" type="input" side="left" status="active" net="NFC_RST" />
+      <pin number="3V3" name="3V3" type="power_in" side="left" status="active" net="+3V3_NFC_SW" wire="W048" />
+    </component>
+    <component ref="Q7" part="AO3401A P-MOS" sheet="nfc" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="NFC_GATE" />
+      <pin number="2" name="S" type="passive" side="left" status="active" net="+3V3_ALWAYS" wire="W050" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="+3V3_NFC_SW" wire="W048" />
+    </component>
+    <component ref="Q8" part="AO3400A N-MOS" sheet="nfc" status="active">
+      <pin number="1" name="G" type="passive" side="left" status="active" net="NFC_EN_GATE" />
+      <pin number="2" name="S" type="passive" side="right" status="active" net="GND" wire="W052" />
+      <pin number="3" name="D" type="passive" side="right" status="active" net="NFC_GATE" wire="W051" />
+    </component>
+    <component ref="R14" part="100k" sheet="nfc" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+3V3_ALWAYS" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="NFC_GATE" />
+    </component>
+    <component ref="R15" part="10k" sheet="nfc" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="PERIPH_EN" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="NFC_EN_GATE" />
+    </component>
+    <component ref="R16" part="100k" sheet="nfc" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="NFC_EN_GATE" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="GND" />
+    </component>
+    <component ref="R17" part="10k target" sheet="nfc" status="active" note="Provisional; may be DNP after V602 reset bench test.">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+3V3_NFC_SW" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="NFC_RST" />
+    </component>
+    <component ref="R18" part="10k" sheet="nfc" status="active">
+      <pin number="1" name="1" type="passive" side="left" status="active" net="+3V3_ALWAYS" />
+      <pin number="2" name="2" type="passive" side="left" status="active" net="NFC_MISO" />
+    </component>
+    <component ref="TX1" part="XKT-412 transmitter (external base)" sheet="power" status="external">
+      <pin number="IN+" name="IN+" type="passive" side="left" status="nc" />
+      <pin number="IN-" name="IN-" type="passive" side="left" status="nc" />
+      <pin number="OUT1" name="OUT1" type="passive" side="left" status="nc" />
+      <pin number="OUT2" name="OUT2" type="passive" side="left" status="nc" />
+    </component>
+  </components>
+</electrical-design>
