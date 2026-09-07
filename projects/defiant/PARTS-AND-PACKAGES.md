@@ -1,6 +1,6 @@
 # USS Defiant — Part Identification, Packages, and Carrier Requirements
 
-**Document status:** STEP 9b PHYSICAL EVIDENCE UPDATE — MAJOR MODULE IDENTIFICATION NOW CLOSED EXCEPT RX1/TX1 AND BATTERY PROTECTION
+**Document status:** STEP 9b PHYSICAL EVIDENCE UPDATE — MAJOR MODULE IDENTIFICATION CLOSED EXCEPT BATTERY PROTECTION
 
 This document answers: what exact part is it, what physical package/form is it, and what does it need in order to be mounted/wired in the Defiant.
 
@@ -10,12 +10,14 @@ This document answers: what exact part is it, what physical package/form is it, 
 |---|---|---|---|---|
 | U1 | Seeed Studio XIAO ESP32-C3 | XIAO module, 21 x 17.8 mm | no carrier required; preserve antenna clearance | **VERIFIED** |
 | BT1 | 103450 Li-Polymer, 3.7 V, 2500 mAh, 9.25 Wh | pouch cell, nominal 10 x 34 x 50 mm | padded/nonconductive restraint; do not clamp/puncture | **VERIFIED identity/electrical/size; protection still OPEN** |
-| U2 | adjustable MT3608 boost-converter module, exact current board photographed | complete small module with trimmer and pads visibly labeled `VIN+`, `VIN-`, `VOUT+`, `VOUT-`; no external EN pad visible | no semiconductor carrier; mount complete module with insulated mechanical restraint | **PHYSICAL BOARD VERIFIED; exact measured dimensions still record later** |
-| U3 | **black XFW-ETLIVE V602 compact RC522-class reader** | compact 3.3 V SPI reader with integrated PCB antenna; approximately 36 x 25 x 4 mm class | no carrier; mount complete board flat with antenna clearance from metal/copper/battery/charging coil as layout permits | **SELECTED / FROZEN for Defiant** |
+| U2 | adjustable MT3608 boost-converter module, exact current board photographed | complete small module with trimmer and pads visibly labeled `VIN+`, `VIN-`, `VOUT+`, `VOUT-`; no external EN pad visible | no semiconductor carrier; mount complete module with insulated mechanical restraint | **PHYSICAL BOARD VERIFIED** |
+| U3 | **black XFW-ETLIVE V602 compact RC522-class reader** | compact 3.3 V SPI reader with integrated PCB antenna; approximately 36 x 25 x 4 mm class | no carrier; mount complete board flat with antenna clearance from metal/copper/battery/charging coil as layout permits | **SELECTED / FROZEN** |
 | U4 | TI `SN74AHCT1G125DBVR` | DBV / SOT-23-5 | purchased SOT-23-5 carrier required for hand-wired build; C1 local | **VERIFIED** |
 | Q class | AOS `AO3400A` | SOT-23-3 | purchased SOT-23-3 carrier / PCB footprint | **VERIFIED** |
 | Q class | AOS `AO3401A` | SOT-23-3 | purchased SOT-23-3 carrier / PCB footprint | **VERIFIED** |
 | D1 class | Nexperia `PMEG2010ER,115` | CFP3 / SOD123W | not compatible with SOT carrier; custom/protoboard pads | **VERIFIED** |
+| TX1 | **XKT-412 wireless-power transmitter board + flat spiral coil** | small green transmitter PCB; photographed `IN+`/`IN-` supply end and `OUT` coil end | external base assembly; secure board/coil and keep coil flat/centered | **PHYSICALLY IDENTIFIED** |
+| RX1 | **XKT-3168 wireless-power receiver board + flat spiral coil** | green receiver PCB with visible `XKT-3168` IC, 330 inductor, rectification/regulation components, factory red/black DC leads | no carrier; mount board/coil flat and mechanically restrained inside hull | **PHYSICALLY IDENTIFIED; output still meter-verify** |
 
 ## 2. NFC reader selection
 
@@ -25,7 +27,7 @@ Three RC522-class boards were physically shown on 2026-09-06.
 
 The user explicitly selected the **black XFW-ETLIVE V602** for the Defiant.
 
-Visible header order from the photographed board:
+Visible header order:
 
 1. SDA / SS / CS
 2. SCK
@@ -40,34 +42,48 @@ Relevant board facts:
 
 - 3.3 V SPI reader;
 - compact integrated PCB antenna;
-- approximately 36 x 25 x 4 mm class from board-family documentation;
+- approximately 36 x 25 x 4 mm class;
 - photographed IC marking appears consistent with an FM17522/RC522-compatible device;
-- IRQ is not required by the Defiant and remains NC.
+- IRQ is not required and remains NC.
 
-**Status: FROZEN as U3.** The remaining work is not board selection; it is bench validation of reset, read range, unpowered-SPI/backfeed, boot behavior, and wireless-charging coexistence.
+**Status: FROZEN as U3.** Remaining work is bench validation of reset, read range, unpowered-SPI/backfeed, boot behavior, and wireless-charging coexistence.
 
-### Green compact RC522 MINI V1.1-style board
+### Spare readers
 
-- 7-pin `NSS/SCK/MOSI/MISO/RST/GND/3.3V` compact reader;
-- electrically viable but **not selected**;
-- retain as spare/bench fallback only.
+- Green compact RC522 MINI V1.1-style: viable but not selected; retain as spare.
+- Large blue standard RFID-RC522: electrically usable but too large for preferred Defiant installation; retain as spare.
 
-### Large blue standard RFID-RC522
+## 3. Wireless-power modules — exact pair identified
 
-- standard full-size blue PCB with large printed antenna;
-- electrically usable but mechanically poor for this model;
-- **not selected** for Defiant installation.
+### TX1 — XKT-412 transmitter
 
-## 3. Wireless-power modules still needing exact physical verification
+Photographs now establish:
 
-| Part | Current identification | Remaining verification |
-|---|---|---|
-| TX1 | XKT-412 transmitter + coil | front/back photo, connector/pad labels, dimensions |
-| RX1 | matching receiver sold as 5 V / 2 A; apparent XKT-3168 | front/back/coil, exact output pads/polarity, unloaded/loaded voltage/current/temperature |
+- PCB silk `XKT-412`;
+- red/black supply wires terminate at the board end visibly marked `IN+` / `IN-`;
+- the opposite end is marked `OUT` and connects to the flat spiral transmitter coil through the resonant network;
+- this board is external to the ship and belongs in the charging stand/base.
+
+### RX1 — XKT-3168 receiver
+
+Photographs now establish:
+
+- receiver controller IC marking clearly reads **`XKT-3168`**;
+- the flat spiral receive coil is connected at the resonant-input end;
+- the opposite end carries factory red/black DC output leads;
+- onboard parts include a 330-marked inductor, Schottky/rectifier device and 100 µF-class capacitors consistent with regulated receiver output circuitry.
+
+**What remains open is electrical characterization, not identification:**
+
+1. meter-confirm red lead positive / black lead negative before any connection;
+2. measure unloaded receiver voltage at best alignment and while misaligned;
+3. measure loaded voltage/current and heating;
+4. validate the R1/R2 `WLC_PRESENT` divider against the highest measured raw voltage;
+5. only then connect RX1 to D1/U1 and the wake detector.
 
 ## 4. Addressable lighting — exact stock confirmed
 
-Exact current stock from user-supplied product screenshot:
+Exact current stock:
 
 - **BTF-LIGHTING SK6812 RGBW Natural White**
 - DC 5 V
@@ -78,14 +94,14 @@ Exact current stock from user-supplied product screenshot:
 - individually addressable RGBW
 - 5050-class package on flexible strip
 
-The product image shows each cuttable pixel section carrying local SMD support components consistent with the normal strip decoupling/matching network. During actual cutting, retain the complete manufacturer-defined pixel section and its local components.
+The product image shows each cuttable pixel section carrying local SMD support components. During actual cutting, retain the complete manufacturer-defined pixel section and its local components.
 
 | Property | Status |
 |---|---|
 | Technology / color | SK6812 RGBW Natural White — **VERIFIED** |
 | Supply | 5 V — **VERIFIED** |
 | Form | 144 LED/m flexible strip, black IP30 — **VERIFIED** |
-| Local support components | visible per section — **VERIFIED FORM; continuity/decoupling retained during cutting required** |
+| Local support components | visible per section — **VERIFIED FORM** |
 | Physical emitter count in Defiant | **OPEN** |
 | Data topology | one serial bus — **FROZEN** |
 
@@ -103,16 +119,16 @@ Exact product shown:
 - 20 mA listed current
 - 120° beam angle
 
-The listing shows direct wires soldered to the 0805 LED and specifies LED forward voltage/current rather than a 5 V/12 V pre-resistor input rating. No series resistor is shown or specified.
+No series resistor is shown or specified.
 
 ### Frozen current limit
 
-For the Defiant's regulated 5.0 V lighting rail, use:
+For the regulated 5.0 V lighting rail:
 
 - **R6 = R7 = R8 = R9 = 150 Ω**
-- minimum power rating: **1/8 W** (0.125 W) or greater
+- minimum power rating: **1/8 W** or greater
 
-At 5.0 V and LED Vf of 2.8–3.3 V, 150 Ω gives approximately **11.3–14.7 mA**, safely below the listed 20 mA while remaining bright for a pulse-phaser effect.
+At 5.0 V and LED Vf of 2.8–3.3 V, 150 Ω gives approximately **11.3–14.7 mA**.
 
 Before installing all four, verify one physical LED's polarity and diode behavior with a current-limited bench test.
 
@@ -139,11 +155,12 @@ U5 remains conditional until this is closed.
 
 ## 8. Step-9b conclusion
 
-Physical evidence and user selection now close several former unknowns:
+Physical evidence now closes almost all module identity questions:
 
-- U2 exact board form and pad labels are confirmed; no exposed EN pad is visible, reinforcing Q1/Q2 input gating.
-- **U3 is now the black XFW-ETLIVE V602 compact reader.** Green compact RC522 is spare; large blue RC522 is not installed.
-- exact SK6812 strip product is confirmed.
-- exact pulse-phaser LED product/spec is confirmed and R6–R9 are fixed at 150 Ω.
+- U2 exact board form and pad labels confirmed.
+- U3 black XFW-ETLIVE V602 selected/frozen.
+- **TX1 exact XKT-412 transmitter and RX1 exact XKT-3168 receiver are physically identified.**
+- exact SK6812 strip confirmed.
+- exact pulse-phaser LEDs confirmed; R6–R9 fixed at 150 Ω.
 
-Still open before final drawings: battery protection proof, RX1/TX1 identification/measurement, U3 reset/backfeed/boot/read-range/coexistence tests, physical SK6812 emitter count/order, load/thermal tests, carrier orientation, and final distribution layout.
+Still open before final drawings: battery protection proof, RX1 electrical characterization, U3 reset/backfeed/boot/read-range/coexistence tests, physical SK6812 emitter count/order, load/thermal tests, carrier orientation, and final distribution layout.
