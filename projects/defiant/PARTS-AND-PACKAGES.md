@@ -11,22 +11,19 @@ This document answers: what exact part is it, what physical package/form is it, 
 | U1 | Seeed Studio XIAO ESP32-C3 | XIAO module, 21 x 17.8 mm | no carrier required; preserve antenna clearance | **VERIFIED** |
 | BT1 | 103450 Li-Polymer, 3.7 V, 2500 mAh, 9.25 Wh | pouch cell, nominal 10 x 34 x 50 mm | padded/nonconductive restraint; do not clamp/puncture | **VERIFIED identity/electrical/size; protection still OPEN** |
 | U2 | adjustable MT3608 boost-converter module, exact current board photographed | complete small module with trimmer and pads visibly labeled `VIN+`, `VIN-`, `VOUT+`, `VOUT-`; no external EN pad visible | no semiconductor carrier; mount complete module with insulated mechanical restraint | **PHYSICAL BOARD VERIFIED; exact measured dimensions still record later** |
+| U3 | **black XFW-ETLIVE V602 compact RC522-class reader** | compact 3.3 V SPI reader with integrated PCB antenna; approximately 36 x 25 x 4 mm class | no carrier; mount complete board flat with antenna clearance from metal/copper/battery/charging coil as layout permits | **SELECTED / FROZEN for Defiant** |
 | U4 | TI `SN74AHCT1G125DBVR` | DBV / SOT-23-5 | purchased SOT-23-5 carrier required for hand-wired build; C1 local | **VERIFIED** |
 | Q class | AOS `AO3400A` | SOT-23-3 | purchased SOT-23-3 carrier / PCB footprint | **VERIFIED** |
 | Q class | AOS `AO3401A` | SOT-23-3 | purchased SOT-23-3 carrier / PCB footprint | **VERIFIED** |
 | D1 class | Nexperia `PMEG2010ER,115` | CFP3 / SOD123W | not compatible with SOT carrier; custom/protoboard pads | **VERIFIED** |
 
-## 2. NFC reader hardware on hand
+## 2. NFC reader selection
 
 Three RC522-class boards were physically shown on 2026-09-06.
 
-### Large blue standard RFID-RC522
+### U3 — selected black XFW-ETLIVE V602
 
-- standard full-size blue PCB with large printed antenna;
-- electrically usable, but mechanically poor for this model;
-- **not selected for Defiant installation** unless both compact boards unexpectedly fail testing.
-
-### Compact black XFW-ETLIVE V602
+The user explicitly selected the **black XFW-ETLIVE V602** for the Defiant.
 
 Visible header order from the photographed board:
 
@@ -39,25 +36,27 @@ Visible header order from the photographed board:
 7. RST
 8. 3V3
 
-Current external documentation for this board family gives approximately **36 x 25 x 4 mm**, 3.3 V, SPI, integrated PCB antenna. The photographed IC marking appears consistent with an FM17522/RC522-compatible device; common MFRC522 libraries support FM17522-class readers, but firmware version/readback must be recorded during bench validation.
+Relevant board facts:
 
-**Status:** **PRIMARY U3 CANDIDATE.** It fits the frozen SPI architecture exactly; IRQ remains NC.
+- 3.3 V SPI reader;
+- compact integrated PCB antenna;
+- approximately 36 x 25 x 4 mm class from board-family documentation;
+- photographed IC marking appears consistent with an FM17522/RC522-compatible device;
+- IRQ is not required by the Defiant and remains NC.
 
-### Compact green RC522 MINI V1.1-style board
+**Status: FROZEN as U3.** The remaining work is not board selection; it is bench validation of reset, read range, unpowered-SPI/backfeed, boot behavior, and wireless-charging coexistence.
 
-Visible header order:
+### Green compact RC522 MINI V1.1-style board
 
-1. NSS
-2. SCK
-3. MOSI
-4. MISO
-5. RST
-6. GND
-7. 3.3V
+- 7-pin `NSS/SCK/MOSI/MISO/RST/GND/3.3V` compact reader;
+- electrically viable but **not selected**;
+- retain as spare/bench fallback only.
 
-This is also a compact 3.3 V SPI RC522-class reader and does not expose IRQ, which is acceptable because the Defiant does not use IRQ.
+### Large blue standard RFID-RC522
 
-**Status:** **VIABLE U3 ALTERNATE.** Bench compare with the black V602 for fit, read range, reset behavior, and unpowered-SPI/backfeed. Because both are about the same footprint class, use whichever performs better in the actual hull; the large blue module remains the fallback only.
+- standard full-size blue PCB with large printed antenna;
+- electrically usable but mechanically poor for this model;
+- **not selected** for Defiant installation.
 
 ## 3. Wireless-power modules still needing exact physical verification
 
@@ -106,20 +105,20 @@ Exact product shown:
 
 The listing shows direct wires soldered to the 0805 LED and specifies LED forward voltage/current rather than a 5 V/12 V pre-resistor input rating. No series resistor is shown or specified.
 
-### Frozen starting current limit
+### Frozen current limit
 
 For the Defiant's regulated 5.0 V lighting rail, use:
 
 - **R6 = R7 = R8 = R9 = 150 Ω**
 - minimum power rating: **1/8 W** (0.125 W) or greater
 
-At 5.0 V and LED Vf of 2.8–3.3 V, 150 Ω gives approximately **11.3–14.7 mA**, safely below the listed 20 mA while remaining bright for a pulse-phaser effect. This also reduces peak load and heat versus driving the LED at the absolute listed 20 mA.
+At 5.0 V and LED Vf of 2.8–3.3 V, 150 Ω gives approximately **11.3–14.7 mA**, safely below the listed 20 mA while remaining bright for a pulse-phaser effect.
 
-Before installing all four, verify one physical LED's polarity and diode behavior with a current-limited bench test; this is verification, not a reason to leave R6–R9 unspecified.
+Before installing all four, verify one physical LED's polarity and diode behavior with a current-limited bench test.
 
 ## 6. Battery protection status
 
-The new BT1 photograph confirms the exact label and shows a stiff/dark structure under the taped lead end that is **consistent with** an end-mounted protection PCB. However, the photograph does not expose enough circuitry to prove the function.
+The BT1 photograph confirms the exact label and shows a stiff/dark structure under the taped lead end that is **consistent with** an end-mounted protection PCB. However, the photograph does not expose enough circuitry to prove the function.
 
 Therefore:
 
@@ -140,11 +139,11 @@ U5 remains conditional until this is closed.
 
 ## 8. Step-9b conclusion
 
-Physical evidence now closes several former unknowns:
+Physical evidence and user selection now close several former unknowns:
 
-- U2 exact board form and functional pad labels are confirmed; no exposed EN pad is visible, reinforcing the frozen external Q1/Q2 input-disconnect architecture.
-- Exact SK6812 strip product is confirmed.
-- Exact pulse-phaser LED product/spec is confirmed and R6–R9 can be fixed at 150 Ω.
-- Both compact RC522-class boards are suitable candidates; black XFW-ETLIVE V602 is the primary candidate, green RC522 MINI V1.1 the alternate, and the large blue reader is not preferred.
+- U2 exact board form and pad labels are confirmed; no exposed EN pad is visible, reinforcing Q1/Q2 input gating.
+- **U3 is now the black XFW-ETLIVE V602 compact reader.** Green compact RC522 is spare; large blue RC522 is not installed.
+- exact SK6812 strip product is confirmed.
+- exact pulse-phaser LED product/spec is confirmed and R6–R9 are fixed at 150 Ω.
 
-Still open before final drawings: battery protection proof, RX1/TX1 identification/measurement, final compact-U3 bench selection, physical SK6812 emitter count/order, load/backfeed/boot/thermal tests, carrier orientation, and final distribution layout.
+Still open before final drawings: battery protection proof, RX1/TX1 identification/measurement, U3 reset/backfeed/boot/read-range/coexistence tests, physical SK6812 emitter count/order, load/thermal tests, carrier orientation, and final distribution layout.
