@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="electrical-design">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="metadata" minOccurs="0"><xs:complexType><xs:sequence><xs:element name="item" minOccurs="0" maxOccurs="unbounded"><xs:complexType><xs:attribute name="key" type="xs:string" use="required"/><xs:attribute name="value" type="xs:string" use="required"/></xs:complexType></xs:element></xs:sequence></xs:complexType></xs:element>
+        <xs:element name="components"><xs:complexType><xs:sequence><xs:element name="component" maxOccurs="unbounded"><xs:complexType><xs:sequence><xs:element name="pin" minOccurs="1" maxOccurs="unbounded"><xs:complexType><xs:attribute name="number" type="xs:string" use="required"/><xs:attribute name="name" type="xs:string" use="required"/><xs:attribute name="type" type="xs:string" use="required"/><xs:attribute name="side" type="xs:string" use="required"/><xs:attribute name="status" type="xs:string" use="required"/><xs:attribute name="net" type="xs:string"/><xs:attribute name="wire" type="xs:string"/></xs:complexType></xs:element></xs:sequence><xs:attribute name="ref" type="xs:string" use="required"/><xs:attribute name="part" type="xs:string" use="required"/><xs:attribute name="sheet" type="xs:string" use="required"/><xs:attribute name="status" type="xs:string" use="required"/><xs:attribute name="note" type="xs:string"/></xs:complexType></xs:element></xs:sequence></xs:complexType></xs:element>
+        <xs:element name="nets"><xs:complexType><xs:sequence><xs:element name="net" maxOccurs="unbounded"><xs:complexType><xs:sequence><xs:element name="connection" minOccurs="1" maxOccurs="unbounded"><xs:complexType><xs:attribute name="ref" type="xs:string" use="required"/><xs:attribute name="pin" type="xs:string" use="required"/><xs:attribute name="pin-name" type="xs:string" use="required"/><xs:attribute name="wire" type="xs:string"/></xs:complexType></xs:element></xs:sequence><xs:attribute name="name" type="xs:string" use="required"/></xs:complexType></xs:element></xs:sequence></xs:complexType></xs:element>
+      </xs:sequence>
+      <xs:attribute name="name" type="xs:string" use="required"/><xs:attribute name="revision" type="xs:string" use="required"/><xs:attribute name="generator" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
