@@ -2,83 +2,80 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** Step 3 — electrical architecture freeze  
+**Current phase:** Step 4 — freeze reference designators  
 **Drawing gate:** **CLOSED**
 
 ## Workflow progress
 
 | Step | Status |
 |---|---|
-| 1. Reconstruct purchased BOM | **COMPLETE enough to proceed** — exact purchase evidence recorded; unresolved physical variants explicitly OPEN |
-| 2. Identify part numbers/packages/carriers | **COMPLETE enough to proceed** — exact semiconductor packages established; module variants requiring photographs remain OPEN |
-| 3. Freeze electrical architecture | **NEXT** |
-| 4. Freeze reference designators | pending |
-| 5. Formal netlist | draft only; pending architecture freeze |
+| 1. Reconstruct purchased BOM | **COMPLETE enough to proceed** |
+| 2. Identify part numbers/packages/carriers | **COMPLETE enough to proceed** |
+| 3. Freeze electrical architecture | **COMPLETE — FROZEN v1.0** in `POWER-ARCHITECTURE.md` |
+| 4. Freeze reference designators | **NEXT** |
+| 5. Formal netlist | draft only; update after Step 4 |
 | 6. XIAO pin map | provisional only |
 | 7. Master wire list | partial only |
 | 8. Per-module pin tables | partial only |
 | 9. Validation | active; release blockers remain |
 | 10+. Drawings/layout/firmware | gated |
 
-Detailed Step-2 identification is in `PARTS-AND-PACKAGES.md`.
+## Frozen architecture summary
 
-## Locked project requirements
+- U1 XIAO ESP32-C3 remains permanently connected to BT1.
+- RX1 wireless power feeds U1's charging/recovery path through isolation and also creates `WLC_PRESENT` for wake.
+- One `PERIPH_EN` GPIO controls the high-draw subsystem power architecture.
+- U2 MT3608 is physically disconnected from BAT+ in sleep using AO3401A high-side switching with AO3400A helper control; MT3608 EN is not relied upon as the primary sleep disconnect.
+- `+5V_LIGHT_SW` powers the single SK6812 serial bus, its SN74AHCT1G125 level shifter, and the four pulse-phaser LED supplies.
+- Four AO3400A channels independently sink the four conventional phaser LEDs.
+- U3 MFRC522 is supplied from a separately switched 3.3 V rail but does not consume a separate MCU power-enable GPIO.
+- Hardware prevents MFRC522 operation while wireless charging is present: `NFC allowed = PERIPH_EN AND NOT WLC_PRESENT`.
+- MFRC522 uses SPI SCK/MOSI/MISO/CS only; IRQ and dedicated MCU reset are not allocated.
+- Total required U1 GPIO budget remains exactly 11: 1 SK data + 4 phasers + 4 NFC SPI + 1 wireless wake + 1 peripheral enable.
+- No GPIO expander, touch module, audio, second SK6812 data bus, reed wake, or NTC monitoring is part of the frozen architecture.
+- Battery protection remains a mandatory safety requirement; exact implementation depends on whether BT1 is physically confirmed to contain an integral protection circuit.
 
-- Seeed Studio XIAO ESP32-C3 remains connected to the 3.7 V LiPo.
-- Deep sleep is the normal low-standby state.
-- The lighting boost rail is off while asleep.
-- MFRC522 NFC hardware is off while asleep.
-- Wireless-power-present must be detectable by the XIAO and must support wake/recovery behavior.
-- NFC is retained for future Star Trek “memory crystal” controls.
-- The sealed model must remain controllable and firmware-updatable wirelessly.
-- No TTP223 touch module.
-- No speaker/audio in this build.
-- Preserve purchased parts wherever reasonably possible; no silent substitutions.
-- No final CAD/schematic artwork until the textual netlist and pin map pass validation.
+## Lighting decision
 
-## Reconstructed lighting decision
+The accepted logical map remains:
 
-Recovered from project history on 2026-02-22:
+| Zone | Function |
+|---|---|
+| P0 | Deflector, top + bottom combined |
+| P1 | Port bussard |
+| P2 | Starboard bussard |
+| P3 | Port warp chiller/grille |
+| P4 | Starboard warp chiller/grille |
+| P5 | Port impulse crystals, both crystals combined |
+| P6 | Starboard impulse crystals, both crystals combined |
+| P7 | Port impulse engine |
+| P8 | Starboard impulse engine |
 
-| Pixel/zone | Function | Status |
-|---|---|---|
-| P0 | Deflector, top + bottom combined | RECONSTRUCTED / previously accepted |
-| P1 | Port bussard | RECONSTRUCTED / previously accepted |
-| P2 | Starboard bussard | RECONSTRUCTED / previously accepted |
-| P3 | Port warp chiller/grille | RECONSTRUCTED / previously accepted |
-| P4 | Starboard warp chiller/grille | RECONSTRUCTED / previously accepted |
-| P5 | Port impulse crystals, both crystals combined | RECONSTRUCTED / previously accepted |
-| P6 | Starboard impulse crystals, both crystals combined | RECONSTRUCTED / previously accepted |
-| P7 | Port impulse engine | RECONSTRUCTED / previously accepted |
-| P8 | Starboard impulse engine | RECONSTRUCTED / previously accepted |
+PH0–PH3 remain four independent non-addressable white pulse-phaser LEDs.
 
-Pulse phasers are separate from the addressable pixels:
+The SK6812 architecture is now frozen as **one serial data bus**, but physical emitter count/order remains a mechanical-layout detail and must not be inferred from the nine logical zones.
 
-- PH0–PH3: four independent non-addressable prewired 0805 white LEDs.
+## Open implementation checks
 
-### Important unresolved point
+These no longer block the architecture concept but must be closed before schematic/assembly release:
 
-History confirms **nine accepted addressable logical zones**, but the evidence recovered so far does **not** conclusively establish the final physical SK6812 emitter count or physical routing/chain topology. Earlier project history reconstructs 5050 SK6812 RGBW flexible strip. Physical count/order must be confirmed rather than inferred from the nine logical zones.
-
-## Current blockers before architecture freeze
-
-1. Confirm exact purchased MFRC522 breakout/module variant and its exposed pins.
-2. Confirm exact MT3608 carrier/module variant, especially whether EN is accessible or hard-wired high.
-3. Confirm exact XKT receiver board/module and connector/pad labels; IC marking is believed to be XKT-3168.
-4. Confirm exact prewired 0805 LED electrical specification and whether series resistors are already present in the leads.
-5. Resolve final SK6812 physical emitter count/chain topology while preserving the accepted P0–P8 logical map.
-6. Resolve GPIO allocation with boot/strapping and deep-sleep wake constraints.
-7. Resolve exact lighting and NFC power-gating implementation.
-8. Confirm resistor/capacitor inventory actually on hand; the recovered DigiKey invoice does not contain ordinary resistors or capacitors.
-9. Confirm whether BT1 includes integral cell-protection circuitry.
+1. BT1 protection status.
+2. Exact RX1 board/pad identity and measured output.
+3. Exact U2 module/pads and 5 V load behavior.
+4. Exact U3 module/header/reset behavior.
+5. Prewired phaser LED electrical specification.
+6. Physical SK6812 emitter count/order.
+7. Final passive values and inventory.
+8. Final GPIO assignment/boot validation.
+9. Backfeed/default-off tests.
 
 ## Drawing release criteria
 
 The drawing gate opens only when all of the following are true:
 
-- `BOM.md` has no architecture-critical unknown component variant.
-- `POWER-ARCHITECTURE.md` is marked **FROZEN**.
-- `NETLIST.md` is marked **APPROVED**.
+- `POWER-ARCHITECTURE.md` remains **FROZEN**.
+- `NETLIST.md` is **APPROVED**.
 - `PINOUT.md` has no duplicate GPIO or boot-state conflicts.
-- `WIRE-LIST.md` covers every off-board electrical connection.
+- `CONNECTIONS.md` defines every component pin.
+- `WIRE-LIST.md` covers every applicable off-board connection.
 - `VALIDATION.md` has no unresolved ERROR items.
