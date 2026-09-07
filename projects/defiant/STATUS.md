@@ -2,80 +2,73 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** **Step 9 — static electrical audit complete; physical validation pending**  
+**Current phase:** **Step 9b — bench / physical validation**  
 **Drawing gate:** **CLOSED**
 
 ## Workflow progress
 
 | Step | Status |
 |---|---|
-| 1. Reconstruct purchased BOM | **COMPLETE enough to proceed** |
-| 2. Identify part numbers/packages/carriers | **COMPLETE enough to proceed** |
-| 3. Freeze electrical architecture | **COMPLETE — FROZEN v1.0**, subject only to explicitly approved audit changes |
-| 4. Freeze reference designators | **COMPLETE — FROZEN v1.1** |
-| 5. Formal netlist | **COMPLETE enough to proceed — FORMAL v1.1** |
-| 6. XIAO pin map | **COMPLETE — FROZEN v1.0** |
-| 7. Master wire list | **COMPLETE enough to proceed — FORMAL v1.0**, base harness W001–W053 assigned |
-| 8. Per-module pin tables | **COMPLETE enough to proceed — FORMAL v1.0** |
-| 9. Static electrical validation | **COMPLETE — CONDITIONAL PASS**; physical/decision blockers remain |
-| 9b. Bench/physical validation | **NEXT** |
-| 10+. Final drawings/layout/closure firmware validation | gated |
+| 1. Reconstruct purchased BOM | COMPLETE enough to proceed |
+| 2. Identify part numbers/packages/carriers | COMPLETE enough to proceed |
+| 3. Freeze electrical architecture | **FROZEN v1.1** |
+| 4. Freeze reference designators | **FROZEN v1.2** |
+| 5. Formal netlist | **FORMAL v1.2** |
+| 6. XIAO pin map | **FROZEN v1.0** |
+| 7. Master wire list | **FORMAL v1.1**; W001–W053 reserved, W013/W053 DNP |
+| 8. Per-module pin tables | **FORMAL v1.1** |
+| 9. Static electrical validation | **COMPLETE — CONDITIONAL PASS** |
+| 9a. Architecture-policy decisions | **COMPLETE / APPROVED** |
+| 9b. Bench / physical validation | **NEXT / ACTIVE** |
+| 10+. Final drawings/layout/closure validation | gated |
 
-Detailed Step-9 reasoning is preserved in `STEP9-AUDIT.md`. `VALIDATION.md` is the authoritative pass/blocker register and `TEST-PLAN.md` gives the required bench sequence.
+## Approved Step-9 decisions
 
-## Static-audit result
+1. **Q9 is DNP.** NFC is allowed while wireless charging is active. W013 and W053 are permanently DNP and never reused.
+2. **Wireless charging presence is the normal deep-sleep wake method for v1.** Wi-Fi/BLE/NFC do not wake a sleeping ship; they become available after the charging field wakes U1.
 
-No static review found a catastrophic short, reversed high-side MOSFET topology, duplicate GPIO, wrong MFRC522 voltage domain, or incompatible SK6812 level-shift scheme.
+These decisions are incorporated into `POWER-ARCHITECTURE.md`, `DESIGNATORS.md`, `NETLIST.md`, `CONNECTIONS.md`, `WIRE-LIST.md`, `VALIDATION.md`, and `STEP9-AUDIT.md`.
 
-Core design remains viable:
+## Frozen XIAO assignment
 
-- U1 XIAO stays permanently connected to BT1.
-- RX1 feeds U1 charging/recovery through D1 and provides `WLC_PRESENT` wake.
-- Q1/Q2 physically disconnect U2/5 V lighting from the battery in sleep.
-- one SK6812 serial bus uses U4 SN74AHCT1G125 level translation.
-- Q3–Q6 independently switch four pulse-phaser LEDs.
-- U3 MFRC522 is on a switched 3.3 V rail.
-- total U1 GPIO allocation remains exactly 11/11 with no expander.
-
-## Two explicit policy decisions now blocking final architecture release
-
-### 1. Q9 charging -> NFC hard inhibit
-
-Current architecture forces NFC OFF whenever wireless power is present. Static audit found no project requirement that proves this is desirable, and it could prevent memory-crystal control while the model is on an active charging stand.
-
-Before changing anything in the frozen architecture, choose:
-
-- **KEEP Q9:** NFC intentionally unavailable while charging; or
-- **DNP Q9:** allow NFC while charging and test coexistence/interference physically.
-
-### 2. Normal deep-sleep wake workflow
-
-Current defined wake source is `WLC_PRESENT` only. While U1 is in deep sleep, Wi-Fi/BLE are off and U3 is unpowered, so neither remote radio control nor an NFC tag can wake it.
-
-Explicitly confirm whether **applying/enabling wireless charging power to wake the ship** is acceptable as the normal wake method. A different instantaneous off-stand wake path would require a deliberate architecture change.
+| XIAO | GPIO | Signal |
+|---|---:|---|
+| D0 | 2 | `NFC_MISO` |
+| D1 | 3 | `WLC_PRESENT` / deep-sleep wake |
+| D2 | 4 | `PH0_GATE` |
+| D3 | 5 | `PH1_GATE` |
+| D4 | 6 | `PH2_GATE` |
+| D5 | 7 | `PH3_GATE` |
+| D6 | 21 | `NFC_CS` |
+| D7 | 20 | `PERIPH_EN` |
+| D8 | 8 | `NFC_SCK` |
+| D9 | 9 | `SK_DATA_RAW` |
+| D10 | 10 | `NFC_MOSI` |
 
 ## Remaining physical blockers before drawing release
 
-1. BT1 integral-protection status and discharge capability.
-2. RX1 exact pad polarity and measured unloaded/loaded maximum voltage/current/temperature.
-3. D1 wireless-input charging/recovery and reverse-current/thermal test.
-4. U2 actual 5 V load capability from realistic LiPo voltages.
-5. Q1 SOT-23 carrier current/thermal capability.
-6. U3 exact header/reset circuitry and unpowered-SPI backfeed/deep-sleep-current behavior.
-7. Prewired phaser LED resistor/Vf/current configuration; close R6–R9.
-8. Physical SK6812 emitter count/order, local decoupling, load and firmware brightness/current envelope.
-9. repeated cold-boot/reset/deep-sleep-wake tests on GPIO2/GPIO8/GPIO9.
-10. final physical BAT+/GND/+5V/+3V3 distribution implementation and any resulting W-numbers.
-11. OTA/control/integrated thermal testing before closure.
-12. carrier pad numbering/orientation continuity-check before soldering semiconductors.
+1. BT1 protection status and discharge capability.
+2. RX1 exact pads and measured unloaded/loaded output/current/temperature.
+3. D1 charging/recovery/reverse-current/thermal test.
+4. U2 5 V load/thermal test from realistic battery voltage.
+5. Q1 carrier-board current/thermal capability.
+6. U3 header/reset behavior and unpowered-SPI backfeed/deep-sleep-current test.
+7. Prewired phaser LED resistor/Vf/current configuration; finalize R6–R9.
+8. Physical SK6812 count/order/local decoupling/load and firmware current limit.
+9. Repeated boot/reset/deep-sleep -> wireless-wake testing on strap pins.
+10. NFC read reliability while wireless charging is active.
+11. Final BAT+/GND/+5V/+3V3 distribution implementation and resulting W-numbers.
+12. SOT carrier pad-orientation continuity check before semiconductor soldering.
+13. OTA/control/integrated thermal testing before hull closure.
+
+`VALIDATION.md` is the authoritative blocker register. `TEST-PLAN.md` defines the bench sequence.
 
 ## Drawing release criteria
 
 The drawing gate opens only when:
 
-- any approved architecture changes from VAL-033/VAL-034 are incorporated consistently;
-- architecture/designators/pinout are coherent;
+- architecture/designators/pinout/netlist remain coherent;
 - `NETLIST.md` is drawing-approved;
 - `CONNECTIONS.md` defines every fitted component pin;
-- `WIRE-LIST.md` covers every applicable discrete harness connection;
-- `VALIDATION.md` contains no unresolved ERROR and no hardware-critical/decision blocker required for drawing correctness.
+- `WIRE-LIST.md` covers every discrete harness connection required by final layout;
+- `VALIDATION.md` has no unresolved ERROR and no hardware-critical blocker required for drawing correctness.
