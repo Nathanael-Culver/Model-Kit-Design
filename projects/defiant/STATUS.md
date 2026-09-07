@@ -2,7 +2,7 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** Step 8 — per-module pin tables  
+**Current phase:** Step 9 — electrical validation  
 **Drawing gate:** **CLOSED**
 
 ## Workflow progress
@@ -16,9 +16,21 @@
 | 5. Formal netlist | **COMPLETE enough to proceed — FORMAL v1.1** |
 | 6. XIAO pin map | **COMPLETE — FROZEN v1.0** |
 | 7. Master wire list | **COMPLETE enough to proceed — FORMAL v1.0**, base harness W001–W053 assigned |
-| 8. Per-module pin tables | **NEXT** |
-| 9. Validation | active; bench blockers remain |
+| 8. Per-module pin tables | **COMPLETE enough to proceed — FORMAL v1.0** in `CONNECTIONS.md` |
+| 9. Validation | **NEXT — electrical/boot/backfeed review plus bench verification plan** |
 | 10+. Drawings/layout/firmware | gated |
+
+## Step-8 connection-table highlights
+
+- U1 BAT, 5V, 3V3, GND, and all D0–D10 pins now have frozen nets and wire IDs where applicable.
+- RX1, U2, and U3 have frozen functional endpoints; only exact generic-module pad/header order remains to verify physically.
+- U4 is completely pinned, including OE/GND local tie, C1 bypass, and R5 data resistor.
+- Q1–Q9 all have exact SOT-23 pin-number-to-net assignments.
+- D1 polarity/pin numbering is explicit.
+- R1–R18 and C1–C2 have explicit terminal connections.
+- LED10–LED13 phaser anode/cathode destinations are explicit; only R6–R9 value/DNP decision remains open.
+- LED14+ has a formal first-emitter/template rule; additional physical SK6812 refs/wires wait for actual count/order.
+- U5 battery-protection pin table is defined conditionally and remains DNP unless BT1 proves unprotected.
 
 ## Frozen XIAO assignment
 
@@ -35,19 +47,6 @@
 | D8 | GPIO8 | `NFC_SCK` |
 | D9 | GPIO9 | `SK_DATA_RAW` |
 | D10 | GPIO10 | `NFC_MOSI` |
-
-## Step-7 wire-list highlights
-
-- Permanent wire IDs now run through `W053`.
-- `W001/W002` are the protected-pack direct battery branch; `W003–W006` are the mutually exclusive U5 battery-protection branch if BT1 proves unprotected.
-- Wireless charging/wake: `W008–W013`.
-- Lighting power gate / MT3608: `W014–W020`.
-- SK6812 level-shifter and first-chain entry: `W021–W027`.
-- Phaser controls and LED harness: `W028–W043`.
-- NFC SPI/power/control: `W044–W053`.
-- Wire colors, gauges and lengths are intentionally still OPEN until current/load and hull routing are measured.
-- Physical `LED14+` inter-emitter harness wires are intentionally not numbered yet because physical SK6812 count/order is still unverified.
-- Local same-board passive connections are kept in the netlist rather than inventing unnecessary harness-wire IDs.
 
 ## Frozen architecture summary
 
@@ -72,6 +71,7 @@
 8. D1/GPIO3 wireless wake test.
 9. Backfeed/default-off tests.
 10. OTA/control tests before closure.
+11. SOT-23/SOT-23-5 carrier pad numbering/orientation verification before soldering.
 
 `VALIDATION.md` remains authoritative for blocker severity.
 
