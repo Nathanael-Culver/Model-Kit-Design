@@ -17,7 +17,7 @@ Severity:
 | VAL-003 | SK6812 logic level | **PASS** | U4 AHCT buffer provides proper 3.3 V -> 5 V data translation |
 | VAL-004 | XIAO boot straps | **BLOCKER — bench test** | D0/GPIO2=NFC_MISO, D8/GPIO8=NFC_SCK, D9/GPIO9=SK_DATA_RAW; repeated boot/sleep-wake testing required with V602/U4 attached |
 | VAL-005 | D6 boot chatter | **BLOCKER — combined U3 test** | D6/GPIO21=NFC_CS; prove V602 remains truly unpowered/not back-fed at reset |
-| VAL-006 | wireless-present voltage | **BLOCKER — measure before connection** | R1/R2 divider is valid near nominal 5 V but RX1 max must be measured before attaching to U1 |
+| VAL-006 | wireless-present voltage | **BLOCKER — measure before connection** | RX1 is now physically confirmed as XKT-3168 receiver. R1/R2 divider is valid near nominal 5 V, but actual maximum output must be measured before attaching to U1 |
 | VAL-007 | wireless-present wake | **PASS assignment / bench test required** | D1/GPIO3 is suitable wake pin; actual wake test still required |
 | VAL-008 | pin budget | **PASS** | 11 unique functions on 11 exposed GPIOs; no expander |
 | VAL-009 | MT3608 shutdown | **PASS architecture + board ID** | actual U2 has no visible exposed EN pad; Q1/Q2 battery-side disconnect remains the correct implementation |
@@ -25,14 +25,14 @@ Severity:
 | VAL-011 | power-on defaults | **PASS design / bench test required** | R3/R4/R10–R16 establish default-OFF states |
 | VAL-012 | XIAO external 5 V path | **BLOCKER — bench test** | verify D1 charging/recovery and no reverse feed |
 | VAL-013 | Schottky polarity | **PASS** | D1 anode=WLC_5V_RAW, cathode=SYS_5V_IN |
-| VAL-014 | phaser current limiting | **PASS design / one-sample check remains** | exact DiCUNO white 0805 stock identified: 2.8–3.3 V, 20 mA. R6–R9 fixed at **150 Ω >=1/8 W**, giving about 11–15 mA from 5.0 V |
+| VAL-014 | phaser current limiting | **PASS design / one-sample check remains** | exact DiCUNO white 0805 stock identified: 2.8–3.3 V, 20 mA. R6–R9 fixed at 150 Ω >=1/8 W, giving about 11–15 mA from 5.0 V |
 | VAL-015 | logic-buffer bypass | **PASS design** | C1=0.1 µF local at U4 |
 | VAL-016 | SK6812 bulk capacitance | **WARNING** | C2=470 µF target; validate after physical emitter count/load known |
 | VAL-017 | SK6812 chain topology | **PASS architecture** | exact BTF-LIGHTING SK6812 RGBW Natural White 5 V 144 LED/m strip confirmed; one serial data bus remains frozen |
-| VAL-018 | V602 power-off I/O | **BLOCKER — highest-priority U3 bench test** | with black XFW-ETLIVE V602 selected, measure unpowered backfeed/clamp/deep-sleep current on SDA/SCK/MOSI/MISO and switched 3V3 rail |
+| VAL-018 | V602 power-off I/O | **BLOCKER — highest-priority U3 bench test** | measure unpowered backfeed/clamp/deep-sleep current on SDA/SCK/MOSI/MISO and switched 3V3 rail |
 | VAL-019 | V602 reset strategy | **BLOCKER — bench test** | verify switched-power reset and determine whether R17 10 kΩ is required or DNP |
 | VAL-020 | MT3608 output capability | **BLOCKER — load/thermal test** | actual board/pads identified; load-test at realistic LiPo voltages |
-| VAL-021 | XKT receiver capability | **BLOCKER — load/thermal test** | measure RX1 voltage/current/alignment/heating |
+| VAL-021 | XKT receiver capability | **BLOCKER — electrical characterization** | RX1 IC marking **XKT-3168** physically confirmed; TX1 XKT-412 physically confirmed. Now measure RX1 polarity, unloaded/max voltage, loaded voltage/current, alignment sensitivity and heating |
 | VAL-022 | backfeed paths | **BLOCKER — integrated bench test** | verify no reverse feed into RX1, U2, V602, or switched rails |
 | VAL-023 | duplicate GPIO use | **PASS** | one primary function per D0–D10 |
 | VAL-024 | OTA after sealing | **BLOCKER for final assembly** | prove Wi-Fi/BLE control and OTA repeatedly before closure |
@@ -51,16 +51,17 @@ Severity:
 | VAL-037 | carrier pad orientation | **BLOCKER before soldering** | continuity-check SOT-23/SOT-23-5 carrier pad numbering/orientation |
 | VAL-038 | NFC while charging coexistence | **BLOCKER — integrated functional test** | V602 must read reliably while XKT charging is active; mitigate only if measured interference is unacceptable |
 | VAL-039 | compact-reader selection | **PASS — USER SELECTED** | black XFW-ETLIVE V602 is frozen as U3. Green compact RC522 and large blue RC522 are spares only |
+| VAL-040 | wireless module identity | **PASS — PHYSICAL EVIDENCE** | TX1 photographed as XKT-412 transmitter; RX1 controller marking clearly reads XKT-3168; coil/output roles are physically distinguishable |
 
 ## Current validation conclusion
 
-**No unresolved static electrical ERROR remains.** U3 selection is now closed; remaining NFC items concern validation of the exact black V602 board.
+**No unresolved static electrical ERROR remains.** Major wireless-module identification is closed; RX1 electrical characterization is now the active wireless blocker.
 
 **Drawing release remains DENIED** because physical/load/fit facts still affect final assembly correctness.
 
 ## Highest-value next tests
 
-1. photograph/measure RX1 and test raw output **before** connection to U1;
+1. measure RX1 red-to-black output with nothing connected and record polarity/max unloaded voltage over alignment/misalignment;
 2. obtain safe evidence for BT1 protection status;
 3. bench-test the selected black V602 for reset, read range and unpowered backfeed;
 4. test one 150 Ω phaser channel;
