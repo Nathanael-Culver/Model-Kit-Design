@@ -1,6 +1,6 @@
 # USS Defiant — Firmware Architecture
 
-**Document status:** BLUEPRINT / authoritative hardware-policy notes current through Step 9
+**Document status:** BLUEPRINT / authoritative hardware-policy notes current through physical-lighting freeze
 
 ## Required capabilities
 
@@ -9,31 +9,27 @@
 - deep-sleep standby.
 - wireless-power-present wake/recovery behavior.
 - controlled switched-rail sequencing.
-- nine logical addressable lighting zones P0–P8.
+- nine logical addressable lighting zones P0–P8 implemented by **14 physical SK6812 RGBW pixels**.
 - four independent pulse-phaser outputs PH0–PH3.
-- MFRC522 NFC support for memory-crystal controls.
+- MFRC522-compatible NFC support using U3 black XFW-ETLIVE V602.
 - safe fallback behavior after reset/brownout.
 
 ## Approved wake policy
 
-For v1, `WLC_PRESENT` on U1 D1/GPIO3 is the **normal deep-sleep wake source**.
+For v1, `WLC_PRESENT` on U1 D1/GPIO3 is the normal deep-sleep wake source.
 
 While U1 is in deep sleep:
 
 - Wi-Fi is off;
 - BLE is off;
-- MFRC522 is power-gated off;
-- therefore Wi-Fi/BLE/NFC cannot wake the model.
+- U3 is power-gated off;
+- Wi-Fi/BLE/NFC therefore do not wake the model.
 
-Normal user workflow is to apply/enable the wireless charging field, which wakes U1. Once awake, Wi-Fi/BLE/NFC controls become available.
-
-Do not add timer wake, reed wake, touch wake, or another wake path without an approved hardware/firmware change.
+Normal workflow is to apply/enable the wireless charging field, which wakes U1. Once awake, Wi-Fi/BLE/NFC controls become available.
 
 ## NFC while charging policy
 
-Q9 is DNP. Firmware must **not** treat `WLC_PRESENT` as a mandatory NFC-disable signal.
-
-NFC may operate while wireless charging is active. Bench validation must test read range/reliability in that condition. If actual interference is observed, report and mitigate the measured problem rather than assuming charging and NFC are incompatible.
+Q9 is DNP. Firmware must not treat `WLC_PRESENT` as a mandatory NFC-disable signal. U3 may operate while wireless charging is active; integrated validation checks actual coexistence.
 
 ## Target state machine
 
@@ -43,7 +39,7 @@ NFC may operate while wireless charging is active. Bench validation must test re
 | `RECOVERY_CHARGE` | charging present with low/unstable battery; keep heavy lighting conservative/off |
 | `IDLE_CONNECTED` | radio/control available |
 | `SHOW` | lighting/effects operation |
-| `NFC_SCAN` | power U3, initialize reader, scan/act on memory crystal; allowed while charging |
+| `NFC_SCAN` | power U3, initialize reader, scan/act on memory crystal |
 | `OTA` | maintain stable power/radio and safe load behavior during update |
 | `PRE_SLEEP` | blank outputs, shut switched rails, configure WLC wake |
 | `DEEP_SLEEP` | minimum standby draw; wait for WLC_PRESENT wake |
@@ -57,7 +53,7 @@ NFC may operate while wireless charging is active. Bench validation must test re
 5. enter recovery mode when supply/battery conditions require it;
 6. enable only needed rails after safe initialization;
 7. initialize SK6812 only after 5 V rail/U4 are valid;
-8. initialize MFRC522 only after +3V3_NFC_SW is stable.
+8. initialize U3 only after `+3V3_NFC_SW` is stable.
 
 ## Pre-sleep sequence
 
@@ -71,7 +67,7 @@ NFC may operate while wireless charging is active. Bench validation must test re
 8. configure D1/GPIO3 `WLC_PRESENT` as wake source;
 9. enter deep sleep.
 
-Firmware should avoid entering deep sleep while `WLC_PRESENT` is already HIGH unless immediate/repeated wake is intentionally handled.
+Avoid entering deep sleep while `WLC_PRESENT` is already HIGH unless immediate/repeated wake is intentionally handled.
 
 ## Lighting logical API
 
@@ -88,7 +84,52 @@ Use logical names rather than scattered physical indices:
 - `P8_IMPULSE_ENGINE_STARBOARD`
 - `PH0`–`PH3`
 
-Physical SK6812 mapping belongs in one configuration structure.
+## Frozen physical pixel configuration
+
+`PHYSICAL_PIXEL_COUNT = 14`.
+
+Physical indices are chain order:
+
+| Index | Ref | Logical zone | Feature |
+|---:|---|---|---|
+| 0 | LED14 | P0 | deflector top |
+| 1 | LED15 | P0 | deflector bottom |
+| 2 | LED16 | P1 | port bussard |
+| 3 | LED17 | P3 | port chiller forward |
+| 4 | LED18 | P3 | port chiller aft |
+| 5 | LED19 | P5 | port impulse crystal A |
+| 6 | LED20 | P5 | port impulse crystal B |
+| 7 | LED21 | P7 | port impulse engine |
+| 8 | LED22 | P8 | starboard impulse engine |
+| 9 | LED23 | P6 | starboard impulse crystal B |
+| 10 | LED24 | P6 | starboard impulse crystal A |
+| 11 | LED25 | P4 | starboard chiller aft |
+| 12 | LED26 | P4 | starboard chiller forward |
+| 13 | LED27 | P2 | starboard bussard |
+
+Authoritative logical mapping:
+
+```cpp
+P0_DEFLECTOR                  = {0, 1};
+P1_BUSSARD_PORT               = {2};
+P2_BUSSARD_STARBOARD          = {13};
+P3_CHILLER_PORT               = {3, 4};
+P4_CHILLER_STARBOARD          = {11, 12};
+P5_IMPULSE_CRYSTALS_PORT      = {5, 6};
+P6_IMPULSE_CRYSTALS_STARBOARD = {9, 10};
+P7_IMPULSE_ENGINE_PORT        = {7};
+P8_IMPULSE_ENGINE_STARBOARD   = {8};
+```
+
+Do not assume `zone_number == pixel_index`.
+
+## Lighting power/current policy
+
+- All 14 pixels share one SK6812 data bus.
+- Firmware must provide a configurable global brightness/current limit.
+- Default development brightness must be conservative until the integrated 14-pixel current draw and MT3608/battery temperatures are measured.
+- Effects should avoid unnecessary simultaneous maximum RGBW output.
+- A future measured current limit belongs in centralized configuration, not scattered effect code.
 
 ## Frozen GPIO constants
 
@@ -108,23 +149,23 @@ PIN_SK_DATA     = 9;
 PIN_NFC_MOSI    = 10;
 ```
 
-Explicitly configure MFRC522 SPI routing; do not assume default Arduino SPI pins.
+Explicitly configure NFC SPI routing; do not assume default Arduino SPI pins.
 
 ## Test firmware phases
 
 1. GPIO/default-state test.
-2. WLC_PRESENT voltage/wake test.
+2. WLC_PRESENT/wake test.
 3. switched-rail test.
 4. one SK6812 + U4 test.
-5. full physical-to-logical lighting-map test.
+5. full LED14–LED27 chain and logical-zone mapping test.
 6. PH0–PH3 test.
-7. MFRC522 power-cycle/SPI/backfeed test.
-8. **MFRC522 read test while XKT charging is active.**
+7. V602 power-cycle/SPI/backfeed test.
+8. V602 read test while XKT charging is active.
 9. Wi-Fi/BLE/web control test.
 10. OTA test.
 11. repeated deep-sleep -> WLC wake test.
-12. integrated final build.
+12. integrated final build/current/thermal test.
 
 ## Configuration/source-of-truth rule
 
-Pin numbers, pixel count/order, power-control polarity and timing constants must be centralized in firmware configuration and remain consistent with `PINOUT.md`, `NETLIST.md`, and the approved architecture. Firmware must not recreate the removed Q9 inhibit in software as a mandatory policy.
+Pin numbers, physical pixel count/order, logical mapping, power-control polarity and timing constants must be centralized in firmware configuration and remain consistent with `PINOUT.md`, `NETLIST.md`, and `LIGHTING-LAYOUT.md`. Firmware must not recreate the removed Q9 inhibit in software as a mandatory policy.
