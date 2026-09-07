@@ -2,7 +2,7 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** Step 4 — freeze reference designators  
+**Current phase:** Step 5 — formal netlist  
 **Drawing gate:** **CLOSED**
 
 ## Workflow progress
@@ -11,9 +11,9 @@
 |---|---|
 | 1. Reconstruct purchased BOM | **COMPLETE enough to proceed** |
 | 2. Identify part numbers/packages/carriers | **COMPLETE enough to proceed** |
-| 3. Freeze electrical architecture | **COMPLETE — FROZEN v1.0** in `POWER-ARCHITECTURE.md` |
-| 4. Freeze reference designators | **NEXT** |
-| 5. Formal netlist | draft only; update after Step 4 |
+| 3. Freeze electrical architecture | **COMPLETE — FROZEN v1.0** |
+| 4. Freeze reference designators | **COMPLETE — FROZEN v1.0** in `DESIGNATORS.md` |
+| 5. Formal netlist | **NEXT** |
 | 6. XIAO pin map | provisional only |
 | 7. Master wire list | partial only |
 | 8. Per-module pin tables | partial only |
@@ -25,15 +25,26 @@
 - U1 XIAO ESP32-C3 remains permanently connected to BT1.
 - RX1 wireless power feeds U1's charging/recovery path through isolation and also creates `WLC_PRESENT` for wake.
 - One `PERIPH_EN` GPIO controls the high-draw subsystem power architecture.
-- U2 MT3608 is physically disconnected from BAT+ in sleep using AO3401A high-side switching with AO3400A helper control; MT3608 EN is not relied upon as the primary sleep disconnect.
-- `+5V_LIGHT_SW` powers the single SK6812 serial bus, its SN74AHCT1G125 level shifter, and the four pulse-phaser LED supplies.
-- Four AO3400A channels independently sink the four conventional phaser LEDs.
-- U3 MFRC522 is supplied from a separately switched 3.3 V rail but does not consume a separate MCU power-enable GPIO.
-- Hardware prevents MFRC522 operation while wireless charging is present: `NFC allowed = PERIPH_EN AND NOT WLC_PRESENT`.
-- MFRC522 uses SPI SCK/MOSI/MISO/CS only; IRQ and dedicated MCU reset are not allocated.
-- Total required U1 GPIO budget remains exactly 11: 1 SK data + 4 phasers + 4 NFC SPI + 1 wireless wake + 1 peripheral enable.
+- U2 MT3608 is physically disconnected from BAT+ in sleep using Q1/Q2; MT3608 EN is not relied upon as the primary sleep disconnect.
+- `+5V_LIGHT_SW` powers the single SK6812 serial bus, U4 level shifter, and four pulse-phaser LED supplies.
+- Q3–Q6 independently switch PH0–PH3.
+- U3 MFRC522 is supplied from separately switched 3.3 V through Q7/Q8 and is hardware-inhibited during wireless charging through Q9.
+- U3 uses SPI SCK/MOSI/MISO/CS only; IRQ and dedicated MCU reset are not allocated.
+- Total required U1 GPIO budget remains exactly 11.
 - No GPIO expander, touch module, audio, second SK6812 data bus, reed wake, or NTC monitoring is part of the frozen architecture.
-- Battery protection remains a mandatory safety requirement; exact implementation depends on whether BT1 is physically confirmed to contain an integral protection circuit.
+- Battery protection remains mandatory; U5 is reserved/DNP unless BT1 proves unprotected.
+
+## Frozen reference-designator highlights
+
+- `U1` XIAO, `U2` MT3608, `U3` MFRC522, `U4` SN74AHCT1G125; `U5` conditional battery protection.
+- `Q1/Q2` lighting power gate.
+- `Q3–Q6` PH0–PH3 switches.
+- `Q7/Q8/Q9` NFC power gate and wireless-charge inhibit.
+- `D1` wireless-input Schottky isolation.
+- `LED10–LED13` are the four physical pulse-phaser LEDs.
+- `LED1–LED9` are permanently superseded placeholders and must not be reused.
+- Physical SK6812 emitters begin at `LED14` once physical count/order is confirmed.
+- `R1–R17` and `C1–C2` have fixed functional slots; exact unresolved values are completed in Step 5.
 
 ## Lighting decision
 
@@ -53,11 +64,9 @@ The accepted logical map remains:
 
 PH0–PH3 remain four independent non-addressable white pulse-phaser LEDs.
 
-The SK6812 architecture is now frozen as **one serial data bus**, but physical emitter count/order remains a mechanical-layout detail and must not be inferred from the nine logical zones.
+The SK6812 architecture is one serial data bus, but physical emitter count/order remains a mechanical-layout detail and must not be inferred from the nine logical zones.
 
 ## Open implementation checks
-
-These no longer block the architecture concept but must be closed before schematic/assembly release:
 
 1. BT1 protection status.
 2. Exact RX1 board/pad identity and measured output.
@@ -74,6 +83,7 @@ These no longer block the architecture concept but must be closed before schemat
 The drawing gate opens only when all of the following are true:
 
 - `POWER-ARCHITECTURE.md` remains **FROZEN**.
+- `DESIGNATORS.md` remains **FROZEN**.
 - `NETLIST.md` is **APPROVED**.
 - `PINOUT.md` has no duplicate GPIO or boot-state conflicts.
 - `CONNECTIONS.md` defines every component pin.
