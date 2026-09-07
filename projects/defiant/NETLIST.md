@@ -1,343 +1,286 @@
 # USS Defiant — Authoritative Netlist
 
-**Document status:** **FORMAL v1.0 — TOPOLOGY COMPLETE / NOT YET DRAWING-APPROVED**  
+**Document status:** **FORMAL v1.1 — GPIO ASSIGNMENT COMPLETE / NOT YET DRAWING-APPROVED**  
 **Architecture source:** `POWER-ARCHITECTURE.md` FROZEN v1.0  
-**Designator source:** `DESIGNATORS.md` FROZEN v1.0  
-**Drawing use:** PROHIBITED until Step 6 pin assignment, physical module verification, and Step 9 validation close the remaining blockers.
+**Designator source:** `DESIGNATORS.md` FROZEN v1.1  
+**Pin source:** `PINOUT.md` FROZEN v1.0  
+**Drawing use:** PROHIBITED until physical module verification and validation close the remaining blockers.
 
-This file is the textual electrical source of truth. Drawings may only represent connections listed here; they may not invent or alter them.
+## 1. U1 XIAO ESP32-C3 — frozen signal assignment
 
-## 1. Net naming rules
+| XIAO pin | GPIO | Net | Direction |
+|---|---:|---|---|
+| D0 | GPIO2 | `NFC_MISO` | input |
+| D1 | GPIO3 | `WLC_PRESENT` | input / deep-sleep wake |
+| D2 | GPIO4 | `PH0_GATE` | output |
+| D3 | GPIO5 | `PH1_GATE` | output |
+| D4 | GPIO6 | `PH2_GATE` | output |
+| D5 | GPIO7 | `PH3_GATE` | output |
+| D6 | GPIO21 | `NFC_CS` | output |
+| D7 | GPIO20 | `PERIPH_EN` | output |
+| D8 | GPIO8 | `NFC_SCK` | output |
+| D9 | GPIO9 | `SK_DATA_RAW` | output |
+| D10 | GPIO10 | `NFC_MOSI` | output |
 
-- power: `CELL+`, `CELL-`, `BAT+`, `+3V3_ALWAYS`, `+3V3_NFC_SW`, `+5V_LIGHT_SW`, `WLC_5V_RAW`, `SYS_5V_IN`, `GND`
-- MCU signals: `PERIPH_EN`, `WLC_PRESENT`, `PH0_GATE`–`PH3_GATE`
-- NFC SPI: `NFC_SCK`, `NFC_MOSI`, `NFC_MISO`, `NFC_CS`
-- LED data: `SK_DATA_RAW`, `SK_DATA_5V`, `SK_DIN_FIRST`, and sequential inter-emitter data nets
-- internal gate nodes: `LIGHT_GATE`, `NFC_GATE`, `NFC_EN_GATE`
-
-Actual XIAO D0–D10 pin assignment is intentionally deferred to Step 6.
+No additional U1 GPIO is available. Any added GPIO function requires an approved architecture change.
 
 ## 2. Battery / protection branch
 
-### If BT1 is confirmed to contain integral protection — U5 DNP
+If BT1 has integral protection, U5 is DNP:
 
 - BT1 positive -> `BAT+`
 - BT1 negative -> `GND`
 - `BAT+` -> U1 BAT+
 - `GND` -> U1 BAT-
 
-### If BT1 is confirmed unprotected — U5 fitted
+If BT1 is unprotected, U5 must be fitted:
 
-- BT1 positive -> `CELL+`
-- BT1 negative -> `CELL-`
-- `CELL+` -> U5 B+
-- `CELL-` -> U5 B-
-- U5 protected output P+ -> `BAT+`
-- U5 protected output P- -> `GND`
+- BT1 positive -> `CELL+` -> U5 B+
+- BT1 negative -> `CELL-` -> U5 B-
+- U5 P+ -> `BAT+`
+- U5 P- -> `GND`
 - `BAT+` -> U1 BAT+
 - `GND` -> U1 BAT-
 
-Only one of these branches is assembled. U5 is never bypassed if an unprotected cell is used.
-
 ## 3. Common ground — `GND`
 
-Connects:
-
-- U1 GND / BAT-
-- RX1 negative output/reference
-- U2 IN- and OUT- / module ground
-- U3 GND
-- U4 pin 3
-- Q2/Q3/Q4/Q5/Q6/Q8/Q9 sources
-- all SK6812 grounds
-- R2 lower end
-- R4, R10–R13, R16 lower ends
-- C1 and C2 negative/ground terminals
-- any fitted U5 protected negative output P-
-
-No intentionally isolated logic ground exists in this design.
+Connects U1, RX1 negative, U2 IN-/OUT-, U3 GND, U4 pin 3, Q2/Q3/Q4/Q5/Q6/Q8/Q9 sources, all SK6812 grounds, sensing-divider return, pull-down resistors, and capacitor returns.
 
 ## 4. Wireless-power / charging path
 
-### RX1
-
-- RX1 positive output -> `WLC_5V_RAW`
-- RX1 negative output -> `GND`
-
-Exact physical pad labels remain to be verified before soldering.
-
-### D1 — PMEG2010ER Schottky isolation
-
-- D1 **anode** -> `WLC_5V_RAW`
-- D1 **cathode / marked-bar end** -> `SYS_5V_IN`
+- RX1 positive -> `WLC_5V_RAW`
+- RX1 negative -> `GND`
+- D1 PMEG2010ER anode -> `WLC_5V_RAW`
+- D1 cathode / marked-bar end -> `SYS_5V_IN`
 - `SYS_5V_IN` -> U1 5 V external-input pin/pad
 
-This orientation permits wireless receiver current toward U1 while blocking reverse feed from U1's 5 V node toward RX1.
+D1 permits RX1 -> U1 current and blocks reverse feed toward RX1.
 
-## 5. Wireless-present detector
+## 5. Wireless-present detector / wake
 
-- R1 = **130 kΩ**: `WLC_5V_RAW` -> `WLC_PRESENT`
-- R2 = **180 kΩ**: `WLC_PRESENT` -> `GND`
-- `WLC_PRESENT` -> U1 wake-capable GPIO, exact pin Step 6
+- R1 = 130 kΩ: `WLC_5V_RAW` -> `WLC_PRESENT`
+- R2 = 180 kΩ: `WLC_PRESENT` -> `GND`
+- `WLC_PRESENT` -> **U1 D1 / GPIO3**
 - `WLC_PRESENT` -> Q9 gate
 
-Nominal divider behavior:
-
-- 4.5 V receiver output -> ~2.61 V at `WLC_PRESENT`
-- 5.0 V -> ~2.90 V
-- 5.5 V -> ~3.19 V
-- 6.0 V -> ~3.48 V
-
-This satisfies the ESP32-C3 3.3 V-domain logic-high requirement across the intended 5 V receiver range while remaining below the 3.6 V absolute input limit through approximately 6.2 V. RX1 must still be measured before final approval.
+Nominal 5.0 V receiver output produces about 2.90 V at `WLC_PRESENT`. Actual RX1 voltage must be measured before final approval.
 
 ## 6. Lighting input power gate
 
-### Q1 — AO3401A P-channel high-side switch
+### Q1 AO3401A
 
-- Q1 source -> `BAT+`
-- Q1 drain -> `U2_VIN_SW`
-- Q1 gate -> `LIGHT_GATE`
+- source -> `BAT+`
+- drain -> `U2_VIN_SW`
+- gate -> `LIGHT_GATE`
 
-### R3 — Q1 default-off pull-up
+### R3
 
-- R3 = **100 kΩ**: `LIGHT_GATE` -> `BAT+`
+- 100 kΩ: `LIGHT_GATE` -> `BAT+`
 
-### Q2 — AO3400A Q1 gate helper
+### Q2 AO3400A
 
-- Q2 drain -> `LIGHT_GATE`
-- Q2 source -> `GND`
-- Q2 gate -> `PERIPH_EN`
+- drain -> `LIGHT_GATE`
+- source -> `GND`
+- gate -> `PERIPH_EN`
 
-### R4 — Q2 default-off pull-down
+### R4
 
-- R4 = **100 kΩ**: `PERIPH_EN` / Q2 gate -> `GND`
+- 100 kΩ: `PERIPH_EN` -> `GND`
 
-Therefore:
+### U1 endpoint
 
-- `PERIPH_EN = LOW/floating` -> Q2 off -> R3 pulls Q1 gate to BAT+ -> U2 disconnected
-- `PERIPH_EN = HIGH` -> Q2 on -> Q1 gate pulled low -> U2 connected to BAT+
+- `PERIPH_EN` -> **U1 D7 / GPIO20**
 
-## 7. U2 MT3608 lighting rail
+`PERIPH_EN` floating/LOW = lighting gate OFF. HIGH = Q1 enables U2 input.
 
-Functional module pads:
+## 7. U2 MT3608
 
-- U2 IN+ -> `U2_VIN_SW`
-- U2 IN- -> `GND`
-- U2 OUT+ -> `+5V_LIGHT_SW`
-- U2 OUT- -> `GND`
+- IN+ -> `U2_VIN_SW`
+- IN- -> `GND`
+- OUT+ -> `+5V_LIGHT_SW`
+- OUT- -> `GND`
 
-U2 is adjusted to **5.0 V output before lighting is attached**.
+Adjust/load-test U2 to 5.0 V before LEDs are connected. MT3608 EN is not the primary sleep-isolation mechanism.
 
-The design does not rely on MT3608 EN for sleep isolation. Any EN pin present on the exact board remains in the board's normal enabled configuration unless bench inspection proves a required change.
-
-## 8. +5 V lighting distribution
+## 8. +5 V lighting rail
 
 `+5V_LIGHT_SW` feeds:
 
-- U4 pin 5 VCC
-- every physical SK6812 VDD
-- LED10–LED13 anode/current-limit branches
-- C2 positive terminal
+- U4 pin 5
+- all physical SK6812 VDD pins
+- LED10–LED13 current-limit branches
+- C2 positive
 
-C2 target = **470 µF**, polarized bulk capacitor, rated **at least 6.3 V; 10 V preferred if physical size permits**. Final capacitance may be increased after physical SK6812 count/load testing without changing C2's designator/function.
+C2 target = 470 µF, >=6.3 V; 10 V preferred if size permits.
 
-## 9. U4 SK6812 level shifter
+## 9. U4 SN74AHCT1G125 SK6812 level shifter
 
-U4 = SN74AHCT1G125DBVR:
+| U4 pin | Connection |
+|---:|---|
+| 1 OE | `GND` |
+| 2 A | `SK_DATA_RAW` = U1 D9/GPIO9 |
+| 3 GND | `GND` |
+| 4 Y | `SK_DATA_5V` |
+| 5 VCC | `+5V_LIGHT_SW` |
 
-| U4 pin | Device pin | Connection |
-|---:|---|---|
-| 1 | OE, active low | `GND` — hardware enabled whenever U4 is powered |
-| 2 | A | `SK_DATA_RAW` from U1 GPIO assigned in Step 6 |
-| 3 | GND | `GND` |
-| 4 | Y | `SK_DATA_5V` |
-| 5 | VCC | `+5V_LIGHT_SW` |
+- C1 = 0.1 µF ceramic between U4 VCC and GND, physically local to U4.
+- R5 = 330 Ω from `SK_DATA_5V` to `SK_DIN_FIRST`.
 
-The AHCT input is over-voltage tolerant with VCC from 0–5.5 V, so the always-powered 3.3 V MCU data pin does not require a separate power-off isolation device when U4's switched 5 V supply is absent.
+`SK_DATA_RAW` is deliberately assigned to D9/GPIO9 because U4 presents the least intrusive available load to the critical BOOT strap. There is no external pull-down on this net.
 
-### C1 — U4 local bypass
+## 10. Physical SK6812 chain
 
-- C1 = **0.1 µF ceramic**
-- C1 one side -> U4 pin 5 / `+5V_LIGHT_SW`
-- C1 other side -> U4 pin 3 / `GND`
-- place physically next to U4 carrier
-
-### R5 — SK6812 series data resistor
-
-- R5 = **330 Ω**
-- R5 input -> `SK_DATA_5V`
-- R5 output -> `SK_DIN_FIRST`
-
-330 Ω is now the formal starting value, consistent with the reconstructed design and normal addressable-LED data-line practice. Change only if bench integrity testing proves necessary.
-
-## 10. Physical SK6812 serial chain
-
-The architecture has exactly **one data chain**, but the exact physical emitter count/order is still a mechanical-layout input.
-
-Physical references begin at LED14:
+One serial chain only:
 
 ```text
 SK_DIN_FIRST -> LED14 DIN
 LED14 DOUT -> LED15 DIN
 LED15 DOUT -> LED16 DIN
-...
-final physical SK6812 DOUT -> NC unless a later test pad is deliberately assigned
+... -> final physical SK6812
 ```
 
-For every physical SK6812:
+Every physical SK6812:
 
 - VDD -> `+5V_LIGHT_SW`
 - GND -> `GND`
-- DIN/DOUT -> serial chain as above
 
-Logical firmware zones P0–P8 map onto one or more physical emitters; they are not electrical nets and do not determine emitter count.
+Physical emitter count/order remains OPEN; logical zones P0–P8 are mapped in firmware and are not physical component counts.
 
 ## 11. Pulse-phaser channels
 
-### PH0
+### PH0 / LED10 / Q3
 
 - `+5V_LIGHT_SW` -> R6 -> LED10 anode
 - LED10 cathode -> Q3 drain
 - Q3 source -> `GND`
-- Q3 gate -> `PH0_GATE`
-- R10 = **100 kΩ**: `PH0_GATE` -> `GND`
+- Q3 gate / `PH0_GATE` -> **U1 D2/GPIO4**
+- R10 = 100 kΩ from `PH0_GATE` -> `GND`
 
-### PH1
+### PH1 / LED11 / Q4
 
 - `+5V_LIGHT_SW` -> R7 -> LED11 anode
 - LED11 cathode -> Q4 drain
 - Q4 source -> `GND`
-- Q4 gate -> `PH1_GATE`
-- R11 = **100 kΩ**: `PH1_GATE` -> `GND`
+- Q4 gate / `PH1_GATE` -> **U1 D3/GPIO5**
+- R11 = 100 kΩ from `PH1_GATE` -> `GND`
 
-### PH2
+### PH2 / LED12 / Q5
 
 - `+5V_LIGHT_SW` -> R8 -> LED12 anode
 - LED12 cathode -> Q5 drain
 - Q5 source -> `GND`
-- Q5 gate -> `PH2_GATE`
-- R12 = **100 kΩ**: `PH2_GATE` -> `GND`
+- Q5 gate / `PH2_GATE` -> **U1 D4/GPIO6**
+- R12 = 100 kΩ from `PH2_GATE` -> `GND`
 
-### PH3
+### PH3 / LED13 / Q6
 
 - `+5V_LIGHT_SW` -> R9 -> LED13 anode
 - LED13 cathode -> Q6 drain
 - Q6 source -> `GND`
-- Q6 gate -> `PH3_GATE`
-- R13 = **100 kΩ**: `PH3_GATE` -> `GND`
+- Q6 gate / `PH3_GATE` -> **U1 D5/GPIO7**
+- R13 = 100 kΩ from `PH3_GATE` -> `GND`
 
-R6–R9 remain **VALUE TBD / CONDITIONAL DNP** until one actual prewired LED is identified/measured. If the prewired LED already contains an appropriate resistor, the corresponding R6–R9 positions become DNP; otherwise all four receive the calculated identical value unless measured LED variation justifies otherwise.
+R6–R9 remain TBD or DNP pending verification of the actual prewired LEDs.
 
-## 12. NFC high-side power gate and wireless inhibit
+## 12. NFC high-side gate and wireless inhibit
 
-### Q7 — AO3401A NFC high-side switch
+### Q7 AO3401A
 
-- Q7 source -> `+3V3_ALWAYS`
-- Q7 drain -> `+3V3_NFC_SW`
-- Q7 gate -> `NFC_GATE`
+- source -> `+3V3_ALWAYS`
+- drain -> `+3V3_NFC_SW`
+- gate -> `NFC_GATE`
 
-### R14 — Q7 default-off pull-up
+### R14
 
-- R14 = **100 kΩ**: `NFC_GATE` -> `+3V3_ALWAYS`
+- 100 kΩ: `NFC_GATE` -> `+3V3_ALWAYS`
 
-### Q8 — AO3400A Q7 gate helper
+### Q8 AO3400A
 
-- Q8 drain -> `NFC_GATE`
-- Q8 source -> `GND`
-- Q8 gate -> `NFC_EN_GATE`
+- drain -> `NFC_GATE`
+- source -> `GND`
+- gate -> `NFC_EN_GATE`
 
-### R15 / R16 — Q8 control
+### R15 / R16
 
-- R15 = **10 kΩ**: `PERIPH_EN` -> `NFC_EN_GATE`
-- R16 = **100 kΩ**: `NFC_EN_GATE` -> `GND`
+- R15 = 10 kΩ: `PERIPH_EN` -> `NFC_EN_GATE`
+- R16 = 100 kΩ: `NFC_EN_GATE` -> `GND`
 
-### Q9 — AO3400A wireless-power NFC inhibit
+### Q9 AO3400A
 
-- Q9 drain -> `NFC_EN_GATE`
-- Q9 source -> `GND`
-- Q9 gate -> `WLC_PRESENT`
+- drain -> `NFC_EN_GATE`
+- source -> `GND`
+- gate -> `WLC_PRESENT`
 
-Behavior:
-
-- PERIPH_EN low -> Q8 off -> Q7 off
-- PERIPH_EN high + WLC_PRESENT low -> Q8 on -> Q7 on -> NFC powered
-- WLC_PRESENT high -> Q9 clamps Q8 gate low -> Q7 remains off regardless of PERIPH_EN
-
-Thus the hardware truth condition is:
+Hardware truth condition:
 
 `NFC_POWER = PERIPH_EN AND NOT WLC_PRESENT`
 
-No new logic IC or extra MCU GPIO is used.
+## 13. U3 MFRC522
 
-## 13. U3 MFRC522 interface
+Functional net-to-U1 mapping:
 
-Functional connections, independent of physical header order:
+| U3 function | Net | U1 endpoint |
+|---|---|---|
+| VCC / 3.3 V | `+3V3_NFC_SW` | switched supply |
+| GND | `GND` | GND |
+| SCK | `NFC_SCK` | **D8 / GPIO8** |
+| MOSI | `NFC_MOSI` | **D10 / GPIO10** |
+| MISO | `NFC_MISO` | **D0 / GPIO2** |
+| SDA/SS/CS | `NFC_CS` | **D6 / GPIO21** |
+| IRQ | NC | none |
+| RST/NRSTPD | reset-bias network | none |
 
-- U3 3.3 V/VCC -> `+3V3_NFC_SW`
-- U3 GND -> `GND`
-- U3 SCK -> `NFC_SCK`
-- U3 MOSI -> `NFC_MOSI`
-- U3 MISO -> `NFC_MISO`
-- U3 SDA/SS/CS -> `NFC_CS`
-- U3 IRQ -> **NC**
-- U3 RST/NRSTPD -> reset-bias arrangement below
+### R17 — reset bias
 
-### R17 — NFC reset bias
+- target 10 kΩ from U3 RST/NRSTPD -> `+3V3_NFC_SW`
+- may become DNP if exact breakout already provides a suitable onboard pull-up/reset behavior
 
-- R17 target = **10 kΩ** from U3 RST/NRSTPD -> `+3V3_NFC_SW`
-- R17 may become DNP if the exact breakout is confirmed to contain a suitable onboard pull-up and reliably resets from supply cycling
+### R18 — GPIO2 boot pull-up
 
-There is no MCU reset GPIO for U3.
+- R18 = **10 kΩ** from `NFC_MISO` / U1 D0/GPIO2 -> `+3V3_ALWAYS`
 
-Before NFC power is removed, firmware must place MCU SPI outputs into a benign state to avoid signal-pin backfeed. Exact behavior is validated after Step 6 pin assignment and physical U3 verification.
+R18 preserves the recommended HIGH bias on GPIO2 while U3 is unpowered. Bench boot testing with the exact breakout remains mandatory.
 
-## 14. U1 functional signal list entering Step 6
+Firmware must explicitly configure MFRC522 SPI as:
 
-U1 must provide exactly these 11 signal roles:
+- SCK GPIO8
+- MOSI GPIO10
+- MISO GPIO2
+- CS GPIO21
 
-1. `WLC_PRESENT` — input / deep-sleep wake
-2. `PERIPH_EN` — output, active high
-3. `SK_DATA_RAW` — output
-4. `PH0_GATE` — output
-5. `PH1_GATE` — output
-6. `PH2_GATE` — output
-7. `PH3_GATE` — output
-8. `NFC_SCK` — output
-9. `NFC_MOSI` — output
-10. `NFC_MISO` — input
-11. `NFC_CS` — output
+Do not assume the board's default SPI pin macros.
 
-No other MCU GPIO function is permitted without an approved architecture change.
+## 14. Required hardware reset/deep-sleep states
 
-## 15. Net-level default states
-
-| Net | Required hardware state at reset/deep sleep |
+| Net | Required hardware state |
 |---|---|
 | `PERIPH_EN` | LOW via R4 |
-| `LIGHT_GATE` | pulled to BAT+ via R3 -> Q1 OFF |
+| `LIGHT_GATE` | HIGH to BAT+ via R3 -> Q1 OFF |
 | `PH0_GATE` | LOW via R10 |
 | `PH1_GATE` | LOW via R11 |
 | `PH2_GATE` | LOW via R12 |
 | `PH3_GATE` | LOW via R13 |
-| `NFC_GATE` | pulled to +3V3_ALWAYS via R14 -> Q7 OFF |
-| `NFC_EN_GATE` | LOW via R16 unless PERIPH_EN actively drives through R15 |
-| `WLC_PRESENT` | LOW via R2 when RX1 absent |
+| `NFC_GATE` | HIGH to +3V3_ALWAYS via R14 -> Q7 OFF |
+| `NFC_EN_GATE` | LOW via R16 |
+| `WLC_PRESENT` | LOW via R2 when receiver absent |
+| `NFC_MISO` / D0 | HIGH-biased via R18 when U3 not driving |
 | `+5V_LIGHT_SW` | OFF |
 | `+3V3_NFC_SW` | OFF |
 
-## 16. Step-5 open items
+## 15. Remaining blockers before drawing approval
 
-The electrical topology is now formal. These remaining items prevent the netlist from being marked drawing-APPROVED but do not prevent Step 6:
+1. physical boot test of D0/GPIO2 with U3 connected/unpowered;
+2. physical boot test of D8/GPIO8 with U3 connected/unpowered;
+3. physical boot test of D9/GPIO9 with U4 connected/unpowered;
+4. WLC_PRESENT deep-sleep wake test on D1/GPIO3;
+5. exact RX1 pad identity/loaded voltage;
+6. exact U2 module verification/load test;
+7. exact U3 header/reset behavior;
+8. BT1 protection status;
+9. prewired phaser LED current/resistor determination;
+10. physical SK6812 emitter count/order;
+11. integrated backfeed/default-off validation.
 
-1. Step 6 actual XIAO D0–D10 assignment.
-2. Exact physical SK6812 emitter count/order.
-3. R6–R9 values or DNP decision from actual prewired LEDs.
-4. Exact RX1 pad polarity/loaded voltage verification.
-5. Exact U2 board pad verification and 5 V load test.
-6. Exact U3 header/RST-board behavior verification.
-7. BT1 protected/unprotected determination and therefore U5 DNP/FITTED decision.
-8. Bench verification of default-off states and no backfeed.
+## 16. Step-6 conclusion
 
-## 17. Step-5 conclusion
-
-**The circuit topology and named nets are complete enough to proceed to GPIO assignment.** No unresolved item currently requires a new active component or architectural redesign. Step 6 must assign exactly one of the 11 functional signal roles above to each XIAO D0–D10 pin and then test the resulting boot/strap behavior.
+The netlist now contains a complete one-to-one XIAO GPIO mapping. No duplicate GPIO exists and no additional GPIO is available. The remaining work is physical verification, wire identification, connection tables, and validation—not additional pin allocation.
