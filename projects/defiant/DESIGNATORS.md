@@ -1,6 +1,6 @@
 # USS Defiant — Reference Designators
 
-**Document status:** **FROZEN v1.0**  
+**Document status:** **FROZEN v1.1**  
 **Applies to:** all subsequent netlists, schematics, wire lists, assembly instructions, bench layouts, photographs, and firmware documentation.
 
 ## 1. Numbering rules
@@ -82,42 +82,37 @@ Purchased inventory remains sufficient: frozen design currently consumes 2 of 10
 - Physical SK6812 emitters will begin at **LED14** and increase in serial-chain order after the hull lighting layout confirms the actual physical emitter count and grouping.
 - Logical zones remain permanently named `P0` through `P8` and may map to one or more physical LED refs.
 
-This prevents a logical-zone count from silently becoming a false physical BOM count.
-
 ## 7. Resistors — assigned by fixed function
-
-Values marked `TBD` are calculated/verified during the formal-netlist step. The reference number and function are already frozen.
 
 | Ref | Function | Current value status |
 |---|---|---|
-| R1 | `WLC_5V_RAW` -> `WLC_PRESENT` divider upper resistor | TBD |
-| R2 | `WLC_PRESENT` -> GND divider lower resistor | TBD |
-| R3 | Q1 gate -> BAT+ default-OFF pull-up | TBD |
-| R4 | Q2 gate -> GND default-OFF pull-down | TBD |
-| R5 | U4 output -> first SK6812 data input series resistor | reconstructed 330 Ω; revalidate |
+| R1 | `WLC_5V_RAW` -> `WLC_PRESENT` divider upper resistor | 130 kΩ formal starting value |
+| R2 | `WLC_PRESENT` -> GND divider lower resistor | 180 kΩ formal starting value |
+| R3 | Q1 gate -> BAT+ default-OFF pull-up | 100 kΩ |
+| R4 | Q2 gate / `PERIPH_EN` -> GND default-OFF pull-down | 100 kΩ |
+| R5 | U4 output -> first SK6812 data input series resistor | 330 Ω |
 | R6 | LED10 / PH0 current-limit resistor | TBD; may become DNP if prewired LED includes verified resistor |
 | R7 | LED11 / PH1 current-limit resistor | TBD; may become DNP if prewired LED includes verified resistor |
 | R8 | LED12 / PH2 current-limit resistor | TBD; may become DNP if prewired LED includes verified resistor |
 | R9 | LED13 / PH3 current-limit resistor | TBD; may become DNP if prewired LED includes verified resistor |
-| R10 | Q3 / PH0 gate default-OFF pull-down | TBD |
-| R11 | Q4 / PH1 gate default-OFF pull-down | TBD |
-| R12 | Q5 / PH2 gate default-OFF pull-down | TBD |
-| R13 | Q6 / PH3 gate default-OFF pull-down | TBD |
-| R14 | Q7 gate -> +3V3_ALWAYS default-OFF pull-up | TBD |
-| R15 | `PERIPH_EN` -> Q8 gate control/conditioning resistor | TBD |
-| R16 | Q8 gate -> GND default-OFF pull-down | TBD |
-| R17 | U3 MFRC522 reset/NRSTPD bias connection if required by exact breakout | **RESERVED / may be DNP** |
-
-Q9's gate is driven from the already-defined `WLC_PRESENT` divider node; an additional pull resistor is not assigned unless Step 5 proves it necessary.
+| R10 | Q3 / PH0 gate default-OFF pull-down | 100 kΩ |
+| R11 | Q4 / PH1 gate default-OFF pull-down | 100 kΩ |
+| R12 | Q5 / PH2 gate default-OFF pull-down | 100 kΩ |
+| R13 | Q6 / PH3 gate default-OFF pull-down | 100 kΩ |
+| R14 | Q7 gate -> +3V3_ALWAYS default-OFF pull-up | 100 kΩ |
+| R15 | `PERIPH_EN` -> Q8 gate control/conditioning resistor | 10 kΩ |
+| R16 | Q8 gate -> GND default-OFF pull-down | 100 kΩ |
+| R17 | U3 MFRC522 reset/NRSTPD bias connection | 10 kΩ target; may be DNP if exact breakout already provides suitable bias |
+| R18 | D0/GPIO2 `NFC_MISO` -> +3V3_ALWAYS boot-strapping pull-up | **10 kΩ — added by frozen Step-6 pin assignment** |
 
 ## 8. Capacitors — assigned by fixed function
 
 | Ref | Function | Current value status |
 |---|---|---|
-| C1 | U4 SN74AHCT1G125 local VCC bypass | 0.1 µF ceramic target; verify package/inventory |
-| C2 | +5V_LIGHT_SW bulk capacitor near lighting distribution | reconstructed 470 µF; revalidate value/voltage/package |
+| C1 | U4 SN74AHCT1G125 local VCC bypass | 0.1 µF ceramic |
+| C2 | +5V_LIGHT_SW bulk capacitor near lighting distribution | 470 µF target; revalidate against physical emitter count/load |
 
-Additional capacitors, if electrically justified during Step 5, receive the next unused numbers and are never inserted by renumbering C1/C2.
+Additional passives, if electrically justified later, receive the next unused numbers and are never inserted by renumbering existing parts.
 
 ## 9. Spare purchased parts — not Defiant reference assignments
 
@@ -127,15 +122,13 @@ The following are documented inventory but are not installed in the frozen archi
 - NCU18XH103F60RB 10 kΩ NTC thermistors
 - unused AO3400A / AO3401A / PMEG2010ER / SN74AHCT1G125 stock
 
-If a later approved engineering change installs one, it receives the next unused applicable reference number.
-
 ## 10. Connector/test-point numbering
 
-No permanent final-hull connector is currently required beyond the battery/module leads already part of their assemblies. `J1+` and `TP1+` remain unassigned until the formal netlist/bench-layout step proves a connector or test point is useful. They will not be invented solely to populate a schematic.
+No permanent final-hull connector is currently required beyond the battery/module leads already part of their assemblies. `J1+` and `TP1+` remain unassigned until a later netlist/bench-layout step proves one useful.
 
 ## 11. Frozen designator summary
 
-Active/conditional frozen references entering Step 5:
+Active/conditional frozen references:
 
 - `U1–U4` active; `U5` reserved conditional battery protection
 - `BT1`, `RX1`, `TX1`
@@ -143,7 +136,7 @@ Active/conditional frozen references entering Step 5:
 - `D1`
 - `LED10–LED13` pulse phasers
 - `LED14+` reserved for confirmed physical SK6812 chain members
-- `R1–R16` active functional positions; `R17` conditional
+- `R1–R18`
 - `C1–C2`
 
 `LED1–LED9` are permanently **SUPERSEDED** and must not appear as physical LEDs in new drawings.
