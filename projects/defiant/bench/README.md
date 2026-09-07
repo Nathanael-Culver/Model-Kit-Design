@@ -1,5 +1,7 @@
-# Bench Development Layout
+# Bench Development
 
-This directory is reserved for the development-board/prototyping layout created **after** schematic approval.
+The authoritative staged bench-development plan is now:
 
-The bench layout must preserve the same reference designators, net names, pin map, and wire IDs as the approved textual design. Temporary test connectors and test points may be added, but they must be documented rather than changing the electrical architecture silently.
+- `BENCH-LAYOUT.md`
+
+Bench work must preserve the same reference designators, net names, GPIO map, 14-pixel LED14–LED27 order, and power topology as the final design. Temporary test connectors and test points are allowed when documented; they must not create a separate undocumented hardware revision.
