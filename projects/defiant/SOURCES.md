@@ -12,7 +12,8 @@ This file records where design facts came from. A claim should not be promoted f
 | SRC-P004 | User-supplied MT3608 photograph, 2026-09-06 | Actual U2 board is the common small adjustable MT3608 module with clearly marked `VIN+`, `VIN-`, `VOUT+`, `VOUT-`; no external EN pad is visible. Confirms external Q1/Q2 input disconnect remains the appropriate sleep-isolation design. |
 | SRC-P005 | User-supplied DiCUNO product screenshots, 2026-09-06 | Exact pulse-phaser stock is DiCUNO pre-wired white SMD 0805, 6.3 in leads. White LED listing: 7000–12000 K, 240–280 mcd, 2.8–3.3 V, 20 mA, 120°. Listing/photo shows direct prewired leads and does not specify/include a series resistor. |
 | SRC-P006 | User-supplied BTF-LIGHTING product screenshot, 2026-09-06 | Exact addressable stock is BTF-LIGHTING SK6812 RGBW Natural White, 5 V, 144 LED/m, 3.28 ft / 1 m, IP30, black PCB. Product image shows cuttable single-pixel strip sections with local SMD support components. |
-| SRC-P007 | User-supplied RFID module photographs, 2026-09-06 | Three reader boards on hand: standard large blue RFID-RC522; compact black XFW-ETLIVE V602 board with 8-pin `SDA/SCK/MOSI/MISO/IRQ/GND/RST/3V3` header; compact green RC522 MINI V1.1-style board with 7-pin `NSS/SCK/MOSI/MISO/RST/GND/3.3V` header. Large blue board is not preferred for the Defiant due size. |
+| SRC-P007 | User-supplied RFID module photographs, 2026-09-06 | Three reader boards on hand: standard large blue RFID-RC522; compact black XFW-ETLIVE V602 with 8-pin `SDA/SCK/MOSI/MISO/IRQ/GND/RST/3V3`; compact green RC522 MINI V1.1-style with 7-pin `NSS/SCK/MOSI/MISO/RST/GND/3.3V`. |
+| SRC-P008 | Explicit user hardware-selection decision, 2026-09-06 | User selected the **black XFW-ETLIVE V602** as the Defiant's U3 NFC reader. Green compact RC522 and large blue RC522 are retained as spares only. |
 | SRC-H001 | Model Kits project history, 2026-02-22 | Accepted nine addressable zones P0–P8; accepted four independent non-addressable pulse-phaser LEDs |
 | SRC-H002 | Earlier Defiant project history, 2025 | 330 Ω SK6812 data resistor and 470 µF 5 V bulk capacitor repeatedly used; older GPIO assignments conflict and are not authoritative |
 | SRC-H003 | Model Kits project history, 2025-04-28 | Previously linked BTF-LIGHTING SK6812 RGBW strip identified as 5 V, 5050 package, 144 LEDs/m, black IP30 PCB, 1 m; now corroborated by SRC-P006. |
@@ -32,7 +33,7 @@ This file records where design facts came from. A claim should not be promoted f
 | SRC-M007 | Aerosemi MT3608 datasheet | MT3608 IC EN is pin 4; actual purchased module does not expose an obvious EN pad, so module-input gating is retained |
 | SRC-M008 | Littelfuse | MDSR-10 family axial reed switch |
 | SRC-M009 | Murata / DigiKey purchase data | NCU18XH103F60RB is a 10 kΩ NTC in 0603 / 1608 metric package |
-| SRC-M010 | XFW-ETLIVE mini RC522 product documentation / current third-party references | Compact XFW-ETLIVE RC522-class module is approximately 36 x 25 x 4 mm, 3.3 V SPI, integrated PCB antenna. Current black V602 board is a viable compact U3 candidate. |
+| SRC-M010 | XFW-ETLIVE mini RC522 product documentation / current third-party references | Compact XFW-ETLIVE RC522-class module is approximately 36 x 25 x 4 mm, 3.3 V SPI, integrated PCB antenna. |
 | SRC-M011 | MFRC522 community libraries | FM17522 is a known RC522-compatible second-source/clone supported by common MFRC522 libraries; exact IC readback should still be recorded during bench test. |
 
 ## Source hierarchy
