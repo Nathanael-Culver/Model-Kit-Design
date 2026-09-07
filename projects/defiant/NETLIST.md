@@ -1,8 +1,8 @@
 # USS Defiant — Authoritative Netlist
 
-**Document status:** **FORMAL v1.2 — approved Step-9 policy decisions incorporated / NOT YET DRAWING-APPROVED**  
+**Document status:** **FORMAL v1.3 — Step-9b physical evidence incorporated / NOT YET DRAWING-APPROVED**  
 **Architecture source:** `POWER-ARCHITECTURE.md` FROZEN v1.1  
-**Designator source:** `DESIGNATORS.md` FROZEN v1.2  
+**Designator source:** `DESIGNATORS.md` FROZEN v1.3  
 **Pin source:** `PINOUT.md` FROZEN v1.0  
 **Drawing use:** PROHIBITED until physical validation closes the remaining blockers.
 
@@ -42,6 +42,8 @@ If BT1 is unprotected, U5 must be fitted:
 - `BAT+` -> U1 BAT+
 - `GND` -> U1 BAT-
 
+Current photograph strongly suggests an end-mounted protection PCB but does not prove it; this branch decision remains OPEN.
+
 ## 3. Common ground
 
 `GND` connects U1, RX1 negative, U2 IN-/OUT-, U3 GND, U4 pin 3, Q2/Q3/Q4/Q5/Q6/Q8 sources, all SK6812 grounds, sensing-divider return, pull-down resistors, and capacitor returns.
@@ -62,17 +64,14 @@ D1 permits RX1 -> U1 current and blocks reverse feed toward RX1.
 
 - R1 = 130 kΩ: `WLC_5V_RAW` -> `WLC_PRESENT`
 - R2 = 180 kΩ: `WLC_PRESENT` -> `GND`
-- `WLC_PRESENT` -> **U1 D1 / GPIO3 only**
-
-`WLC_PRESENT` no longer branches to Q9 because Q9 is DNP.
+- `WLC_PRESENT` -> U1 D1 / GPIO3 only
 
 Approved v1 wake policy:
 
-- `WLC_PRESENT` is the normal deep-sleep wake source;
 - applying/enabling wireless charging wakes the ship;
 - Wi-Fi/BLE/NFC do not wake U1 from deep sleep.
 
-Nominal 5.0 V receiver output produces about 2.90 V at `WLC_PRESENT`. Actual RX1 voltage must be measured before final approval.
+Actual RX1 maximum output voltage remains to be measured before attaching this divider to U1.
 
 ## 6. Lighting input power gate
 
@@ -96,20 +95,20 @@ Nominal 5.0 V receiver output produces about 2.90 V at `WLC_PRESENT`. Actual RX1
 
 - 100 kΩ: `PERIPH_EN` -> `GND`
 
-### U1 endpoint
+`PERIPH_EN` -> U1 D7/GPIO20.
 
-- `PERIPH_EN` -> U1 D7/GPIO20
+## 7. U2 MT3608 — physical board identified
 
-LOW/floating = lighting off; HIGH = lighting input enabled.
+Photographed U2 is the common adjustable MT3608 board with visible pads:
 
-## 7. U2 MT3608
+- `VIN+` -> `U2_VIN_SW`
+- `VIN-` -> `GND`
+- `VOUT+` -> `+5V_LIGHT_SW`
+- `VOUT-` -> `GND`
 
-- IN+ -> `U2_VIN_SW`
-- IN- -> `GND`
-- OUT+ -> `+5V_LIGHT_SW`
-- OUT- -> `GND`
+No external EN pad is visible on the actual board. The design therefore retains the already-frozen Q1/Q2 battery-side input disconnect; do not modify the MT3608 IC itself for normal assembly.
 
-Adjust/load-test to 5.0 V before LEDs are connected. MT3608 EN is not the sleep-isolation mechanism.
+Adjust/load-test U2 to 5.0 V before LEDs are connected.
 
 ## 8. +5 V lighting rail
 
@@ -117,7 +116,7 @@ Adjust/load-test to 5.0 V before LEDs are connected. MT3608 EN is not the sleep-
 
 - U4 pin 5
 - all physical SK6812 VDD pins
-- LED10–LED13 current-limit branches
+- R6–R9 phaser branches
 - C2 positive
 
 C2 target = 470 µF, >=6.3 V; 10 V preferred if size permits.
@@ -135,7 +134,9 @@ C2 target = 470 µF, >=6.3 V; 10 V preferred if size permits.
 - C1 = 0.1 µF ceramic between VCC and GND, local to U4.
 - R5 = 330 Ω from `SK_DATA_5V` to `SK_DIN_FIRST`.
 
-## 10. Physical SK6812 chain
+## 10. Physical SK6812 chain — exact strip verified
+
+Exact stock is BTF-LIGHTING SK6812 RGBW Natural White, 5 V, 144 LED/m, black IP30 flexible strip.
 
 One serial chain only:
 
@@ -146,18 +147,23 @@ LED15 DOUT -> LED16 DIN
 ... -> final physical SK6812
 ```
 
-Every physical SK6812:
+Every physical SK6812 section:
 
 - VDD -> `+5V_LIGHT_SW`
 - GND -> `GND`
+- retain the complete manufacturer-defined cut section and its local SMD support components
 
-Physical emitter count/order remains OPEN. P0–P8 are firmware logical zones.
+Physical emitter count/order remains OPEN. P0–P8 are firmware logical zones and may map to one or multiple physical emitters.
 
-## 11. Pulse-phaser channels
+## 11. Pulse-phaser channels — current limiting closed
+
+Exact LEDs are DiCUNO prewired white 0805 devices, listed 2.8–3.3 V forward voltage and 20 mA maximum/listed current. No series resistor is specified or shown in the prewired product.
+
+Use **150 Ω, >=1/8 W** for each channel. At 5.0 V this gives approximately 11.3–14.7 mA across the listed Vf range.
 
 ### PH0
 
-- `+5V_LIGHT_SW` -> R6 -> LED10 anode
+- `+5V_LIGHT_SW` -> **R6 = 150 Ω** -> LED10 anode
 - LED10 cathode -> Q3 drain
 - Q3 source -> `GND`
 - Q3 gate -> `PH0_GATE` -> U1 D2/GPIO4
@@ -165,7 +171,7 @@ Physical emitter count/order remains OPEN. P0–P8 are firmware logical zones.
 
 ### PH1
 
-- `+5V_LIGHT_SW` -> R7 -> LED11 anode
+- `+5V_LIGHT_SW` -> **R7 = 150 Ω** -> LED11 anode
 - LED11 cathode -> Q4 drain
 - Q4 source -> `GND`
 - Q4 gate -> `PH1_GATE` -> U1 D3/GPIO5
@@ -173,7 +179,7 @@ Physical emitter count/order remains OPEN. P0–P8 are firmware logical zones.
 
 ### PH2
 
-- `+5V_LIGHT_SW` -> R8 -> LED12 anode
+- `+5V_LIGHT_SW` -> **R8 = 150 Ω** -> LED12 anode
 - LED12 cathode -> Q5 drain
 - Q5 source -> `GND`
 - Q5 gate -> `PH2_GATE` -> U1 D4/GPIO6
@@ -181,13 +187,13 @@ Physical emitter count/order remains OPEN. P0–P8 are firmware logical zones.
 
 ### PH3
 
-- `+5V_LIGHT_SW` -> R9 -> LED13 anode
+- `+5V_LIGHT_SW` -> **R9 = 150 Ω** -> LED13 anode
 - LED13 cathode -> Q6 drain
 - Q6 source -> `GND`
 - Q6 gate -> `PH3_GATE` -> U1 D5/GPIO7
 - R13 = 100 kΩ `PH3_GATE` -> `GND`
 
-R6–R9 remain TBD or DNP pending actual LED verification.
+Before duplicating all four physical channels, verify one actual LED's polarity and operation with current limiting; R6–R9 no longer remain unspecified.
 
 ## 12. NFC high-side gate
 
@@ -212,20 +218,48 @@ R6–R9 remain TBD or DNP pending actual LED verification.
 - R15 = 10 kΩ: `PERIPH_EN` -> `NFC_EN_GATE`
 - R16 = 100 kΩ: `NFC_EN_GATE` -> `GND`
 
-### Q9
+Q9 is DNP. Therefore `NFC_POWER = PERIPH_EN`, including while wireless charging is active.
 
-- **DNP**
-- no gate connection to `WLC_PRESENT`
-- no drain connection to `NFC_EN_GATE`
-- no source connection to `GND`
+## 13. U3 compact RC522-class reader
 
-Hardware truth condition is now simply:
+The large blue standard RC522 is mechanically disfavored and not the intended final U3.
 
-`NFC_POWER = PERIPH_EN`
+Two compact boards on hand fit the frozen electrical interface:
 
-This explicitly allows NFC to operate while wireless charging is present.
+### Primary candidate — black XFW-ETLIVE V602
 
-## 13. U3 MFRC522
+Visible header order:
+
+1. SDA / SS / CS
+2. SCK
+3. MOSI
+4. MISO
+5. IRQ
+6. GND
+7. RST
+8. 3V3
+
+- IRQ -> NC
+- other functions map directly to the nets below
+- integrated antenna / compact board class
+- board family is approximately 36 x 25 x 4 mm
+- photographed IC appears RC522-compatible / FM17522-class; bench firmware-version readback required
+
+### Alternate — green RC522 MINI V1.1-style
+
+Visible header order:
+
+1. NSS
+2. SCK
+3. MOSI
+4. MISO
+5. RST
+6. GND
+7. 3.3V
+
+No IRQ is exposed, which is acceptable because IRQ is unused.
+
+### Frozen functional mapping for either compact board
 
 | U3 function | Net | U1 endpoint |
 |---|---|---|
@@ -234,20 +268,20 @@ This explicitly allows NFC to operate while wireless charging is present.
 | SCK | `NFC_SCK` | D8 / GPIO8 |
 | MOSI | `NFC_MOSI` | D10 / GPIO10 |
 | MISO | `NFC_MISO` | D0 / GPIO2 |
-| SDA/SS/CS | `NFC_CS` | D6 / GPIO21 |
-| IRQ | NC | none |
-| RST/NRSTPD | reset-bias network | none |
+| SDA/SS/NSS/CS | `NFC_CS` | D6 / GPIO21 |
+| IRQ | NC if present | none |
+| RST | reset-bias network | none |
 
 ### R17
 
-- target 10 kΩ from U3 RST/NRSTPD -> `+3V3_NFC_SW`
-- may become DNP if the exact breakout already provides appropriate bias/reset behavior
+- target 10 kΩ from U3 RST -> `+3V3_NFC_SW`
+- may become DNP if the selected compact board already provides suitable reset bias and power-cycle behavior
 
 ### R18
 
 - 10 kΩ from `NFC_MISO` / U1 D0/GPIO2 -> `+3V3_ALWAYS`
 
-Firmware must explicitly configure SPI pins GPIO8/GPIO10/GPIO2/GPIO21.
+Final black-vs-green selection is a bench/mechanical choice based on read range, reset behavior, unpowered-SPI backfeed, and fit—not an architecture change.
 
 ## 14. Required reset/deep-sleep states
 
@@ -265,18 +299,17 @@ Firmware must explicitly configure SPI pins GPIO8/GPIO10/GPIO2/GPIO21.
 
 ## 15. Remaining blockers before drawing approval
 
-1. D0/GPIO2 boot and U3 unpowered-I/O test;
-2. D8/GPIO8 boot test with U3 attached/off;
-3. D9/GPIO9 boot test with U4 attached/off;
-4. D1/GPIO3 wireless deep-sleep wake test;
-5. RX1 pad identity/loaded voltage/current;
-6. U2 load/thermal test and Q1 carrier-current test;
-7. U3 header/reset behavior;
-8. BT1 protection/discharge capability;
-9. phaser LED current/resistor determination;
-10. physical SK6812 count/order/decoupling/load;
-11. integrated backfeed/default-off/charging/NFC coexistence validation.
+1. BT1 protection/discharge capability proof;
+2. RX1 pad identity/loaded voltage/current/temperature;
+3. D1 charging/recovery/reverse-current/thermal test;
+4. U2 load/thermal test and Q1 carrier-current test;
+5. compact U3 black-vs-green selection after backfeed/reset/read-range test;
+6. D0/D8 boot safety with selected U3 attached/off;
+7. D9 boot safety with U4 attached/off;
+8. D1/GPIO3 wireless deep-sleep wake test;
+9. physical SK6812 emitter count/order and full lighting load;
+10. integrated charging/NFC coexistence and final distribution implementation.
 
 ## 16. Current conclusion
 
-The approved Q9 removal and charging-field wake policy are now incorporated. The electrical topology remains coherent and the GPIO map is unchanged.
+The exact MT3608 board form, addressable-strip product, and phaser LED product are now identified. The only prior electrical `ERROR`—phaser current limiting—is closed with R6–R9 = 150 Ω. Two compact RC522 boards are viable without changing the frozen GPIO map or architecture.
