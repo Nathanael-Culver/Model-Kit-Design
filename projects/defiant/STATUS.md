@@ -2,8 +2,25 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** textual reconstruction and architecture review  
+**Current phase:** Step 3 — electrical architecture freeze  
 **Drawing gate:** **CLOSED**
+
+## Workflow progress
+
+| Step | Status |
+|---|---|
+| 1. Reconstruct purchased BOM | **COMPLETE enough to proceed** — exact purchase evidence recorded; unresolved physical variants explicitly OPEN |
+| 2. Identify part numbers/packages/carriers | **COMPLETE enough to proceed** — exact semiconductor packages established; module variants requiring photographs remain OPEN |
+| 3. Freeze electrical architecture | **NEXT** |
+| 4. Freeze reference designators | pending |
+| 5. Formal netlist | draft only; pending architecture freeze |
+| 6. XIAO pin map | provisional only |
+| 7. Master wire list | partial only |
+| 8. Per-module pin tables | partial only |
+| 9. Validation | active; release blockers remain |
+| 10+. Drawings/layout/firmware | gated |
+
+Detailed Step-2 identification is in `PARTS-AND-PACKAGES.md`.
 
 ## Locked project requirements
 
@@ -41,7 +58,7 @@ Pulse phasers are separate from the addressable pixels:
 
 ### Important unresolved point
 
-History confirms **nine accepted addressable zones/pixels**, but the evidence recovered so far does **not** conclusively establish whether the final 2026 implementation was one physical SK6812 data chain or multiple independent chains. Older 2025 drafts used one chain, but those drafts also contain GPIO conflicts and are not authoritative. Therefore chain count is **OPEN** and must not be guessed in drawings.
+History confirms **nine accepted addressable logical zones**, but the evidence recovered so far does **not** conclusively establish the final physical SK6812 emitter count or physical routing/chain topology. Earlier project history reconstructs 5050 SK6812 RGBW flexible strip. Physical count/order must be confirmed rather than inferred from the nine logical zones.
 
 ## Current blockers before architecture freeze
 
@@ -49,10 +66,11 @@ History confirms **nine accepted addressable zones/pixels**, but the evidence re
 2. Confirm exact MT3608 carrier/module variant, especially whether EN is accessible or hard-wired high.
 3. Confirm exact XKT receiver board/module and connector/pad labels; IC marking is believed to be XKT-3168.
 4. Confirm exact prewired 0805 LED electrical specification and whether series resistors are already present in the leads.
-5. Resolve final SK6812 physical chain count while preserving the accepted P0–P8 pixel map.
+5. Resolve final SK6812 physical emitter count/chain topology while preserving the accepted P0–P8 logical map.
 6. Resolve GPIO allocation with boot/strapping and deep-sleep wake constraints.
-7. Resolve whether lighting power and NFC power are independently gated or share one control signal.
+7. Resolve exact lighting and NFC power-gating implementation.
 8. Confirm resistor/capacitor inventory actually on hand; the recovered DigiKey invoice does not contain ordinary resistors or capacitors.
+9. Confirm whether BT1 includes integral cell-protection circuitry.
 
 ## Drawing release criteria
 
