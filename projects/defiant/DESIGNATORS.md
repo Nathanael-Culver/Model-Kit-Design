@@ -1,6 +1,6 @@
 # USS Defiant — Reference Designators
 
-**Document status:** **FROZEN v1.3**  
+**Document status:** **FROZEN v1.4**  
 **Applies to:** all subsequent netlists, schematics, wire lists, assembly instructions, bench layouts, photographs, and firmware documentation.
 
 ## 1. Numbering rules
@@ -19,11 +19,11 @@
 | RX1 | XKT high-current wireless-power receiver, apparent XKT-3168 IC | wireless power / charge input / wake-presence source | **FROZEN identity class; exact module revision OPEN** |
 | TX1 | XKT-412 wireless-power transmitter | external charging/power base | **FROZEN** |
 | U2 | photographed adjustable MT3608 boost-converter module | switched battery -> 5 V lighting rail | **FROZEN / physical pad form VERIFIED** |
-| U3 | compact RC522-class 3.3 V SPI reader | memory-crystal/NFC reader | **FROZEN function; black XFW-ETLIVE V602 primary candidate, green RC522 MINI V1.1 alternate; bench selection OPEN** |
+| U3 | **black XFW-ETLIVE V602 compact 3.3 V SPI RC522-class reader** | memory-crystal/NFC reader | **FROZEN / USER SELECTED** |
 | U4 | TI SN74AHCT1G125DBVR | 3.3 V -> 5 V SK6812 data buffer | **FROZEN** |
 | U5 | optional 1S LiPo protection module/device | used only if BT1 is unprotected | **RESERVED / DNP unless required** |
 
-The large blue standard RFID-RC522 board is **not selected** for normal Defiant installation due its larger footprint.
+The green compact RC522 MINI V1.1-style board is retained as a spare only. The large blue standard RFID-RC522 board is not selected for Defiant installation.
 
 ## 3. MOSFETs
 
@@ -77,7 +77,7 @@ The large blue standard RFID-RC522 board is **not selected** for normal Defiant 
 | R14 | Q7 gate -> +3V3_ALWAYS default-OFF pull-up | 100 kΩ |
 | R15 | `PERIPH_EN` -> Q8 gate conditioning | 10 kΩ |
 | R16 | Q8 gate -> GND default-OFF pull-down | 100 kΩ |
-| R17 | U3 reset/NRSTPD bias | 10 kΩ target / possible DNP after exact compact-board test |
+| R17 | U3 V602 RST bias | 10 kΩ target / possible DNP after reset test |
 | R18 | D0/GPIO2 `NFC_MISO` -> +3V3_ALWAYS boot pull-up | 10 kΩ |
 
 R6–R9 are based on the verified DiCUNO white-LED listing (2.8–3.3 V, 20 mA) and the regulated 5.0 V lighting rail. 150 Ω yields approximately 11–15 mA.
@@ -89,12 +89,12 @@ R6–R9 are based on the verified DiCUNO white-LED listing (2.8–3.3 V, 20 mA) 
 | C1 | U4 local VCC bypass | 0.1 µF ceramic |
 | C2 | +5V_LIGHT_SW bulk capacitor | 470 µF target; revalidate after physical load known |
 
-The exact BTF-LIGHTING 144 LED/m SK6812 strip is now physically/product-identified; retain each manufacturer's complete cuttable pixel section and its local SMD components.
+The exact BTF-LIGHTING 144 LED/m SK6812 strip is physically/product-identified; retain each manufacturer's complete cuttable pixel section and its local SMD components.
 
 ## 8. Spare / alternate purchased parts
 
-- green compact RC522 MINI V1.1 board: viable U3 alternate until bench selection closes
-- large blue standard RFID-RC522: electrical fallback, mechanically disfavored
+- green compact RC522 MINI V1.1-style board: **spare / not installed**
+- large blue standard RFID-RC522: **spare / not installed**
 - MDSR-10-15-20 reed switches
 - NCU18XH103F60RB NTCs
 - unused AO3400A / AO3401A / PMEG2010ER / SN74AHCT1G125 inventory
@@ -102,9 +102,9 @@ The exact BTF-LIGHTING 144 LED/m SK6812 strip is now physically/product-identifi
 
 ## 9. Summary
 
-- U1/U2/U4 active and identified; U3 compact candidate class identified, final black-vs-green selection pending bench test
-- U5 conditional on BT1 protection proof
+- U3 is now definitively the black XFW-ETLIVE V602 compact reader
+- U5 remains conditional on BT1 protection proof
 - Q1–Q8 active; Q9 DNP
-- LED10–LED13 exact DiCUNO parts; R6–R9 now fixed at 150 Ω
+- LED10–LED13 exact DiCUNO parts; R6–R9 fixed at 150 Ω
 - LED14+ reserved for physical SK6812s
 - no reference numbers are renumbered or reused
