@@ -1,6 +1,6 @@
 # USS Defiant — Per-Component Pin / Connection Tables
 
-**Document status:** **FORMAL v1.2 — Step-9b physical evidence incorporated**  
+**Document status:** **FORMAL v1.3 — black V602 U3 selection incorporated**  
 **Sources:** `POWER-ARCHITECTURE.md`, `DESIGNATORS.md`, `NETLIST.md`, `PINOUT.md`, `WIRE-LIST.md`.  
 **Rule:** every installed terminal resolves to a named net, `NC`, `DNP`, or a conditional branch.
 
@@ -106,8 +106,6 @@ R3 = 100 kΩ LIGHT_GATE -> BAT+. R4 = 100 kΩ PERIPH_EN -> GND.
 
 ## 9. U2 — photographed MT3608 module
 
-Actual board pad markings are visible and now authoritative:
-
 | Physical pad label | Net | Connection | Wire | Status |
 |---|---|---|---|---|
 | `VIN+` | `U2_VIN_SW` | Q1 drain | W014 | VERIFIED label |
@@ -183,7 +181,7 @@ At 5.0 V, 150 Ω produces approximately 11.3–14.7 mA across the listed Vf rang
 |---:|---|---|---|---|
 | 1 | Gate | `NFC_GATE` | Q8 drain; R14 pull-up | W051 if separate |
 | 2 | Source | `+3V3_ALWAYS` | U1 3V3 | W050 |
-| 3 | Drain | `+3V3_NFC_SW` | U3 VCC | W048 |
+| 3 | Drain | `+3V3_NFC_SW` | U3 3V3 | W048 |
 
 ### Q8 AO3400A
 
@@ -197,59 +195,34 @@ R14 = 100 kΩ NFC_GATE -> +3V3_ALWAYS. R15 = 10 kΩ PERIPH_EN -> NFC_EN_GATE. R1
 
 Q9 pins 1/2/3: DNP / no connection. W013 and W053: DNP.
 
-## 16. U3 — compact RC522-class reader candidates
+## 16. U3 — black XFW-ETLIVE V602
 
-### Black XFW-ETLIVE V602 — primary candidate
+**This is the selected/frozen Defiant NFC reader.**
 
 Photographed header order, top-to-bottom as printed:
 
-| Printed pin | Net / project use | Wire |
-|---|---|---|
-| SDA | `NFC_CS` -> U1 D6 | W047 |
-| SCK | `NFC_SCK` -> U1 D8 | W044 |
-| MOSI | `NFC_MOSI` -> U1 D10 | W045 |
-| MISO | `NFC_MISO` -> U1 D0 | W046 |
-| IRQ | NC | none |
-| GND | `GND` | W049 |
-| RST | reset bias via R17 | local |
-| 3V3 | `+3V3_NFC_SW` | W048 |
+| Printed pin | Net / project use | Wire | Status |
+|---|---|---|---|
+| `SDA` | `NFC_CS` -> U1 D6/GPIO21 | W047 | FROZEN |
+| `SCK` | `NFC_SCK` -> U1 D8/GPIO8 | W044 | FROZEN |
+| `MOSI` | `NFC_MOSI` -> U1 D10/GPIO10 | W045 | FROZEN |
+| `MISO` | `NFC_MISO` -> U1 D0/GPIO2 | W046 | FROZEN |
+| `IRQ` | NC | none | NC |
+| `GND` | `GND` | W049 | FROZEN |
+| `RST` | reset bias via R17 to `+3V3_NFC_SW` unless bench test makes R17 DNP | local | validation pending |
+| `3V3` | `+3V3_NFC_SW` | W048 | FROZEN |
 
-### Green RC522 MINI V1.1-style — viable alternate
+R17 target = 10 kΩ unless the V602 onboard reset circuitry proves it unnecessary. R18 = 10 kΩ from U1 D0/GPIO2 `NFC_MISO` to `+3V3_ALWAYS`.
 
-Photographed header order:
-
-| Printed pin | Net / project use | Wire |
-|---|---|---|
-| NSS | `NFC_CS` -> U1 D6 | W047 |
-| SCK | `NFC_SCK` -> U1 D8 | W044 |
-| MOSI | `NFC_MOSI` -> U1 D10 | W045 |
-| MISO | `NFC_MISO` -> U1 D0 | W046 |
-| RST | reset bias via R17 | local |
-| GND | `GND` | W049 |
-| 3.3V | `+3V3_NFC_SW` | W048 |
-
-No IRQ is exposed on the green board; that is acceptable because IRQ is not used.
-
-### Selection rule
-
-Use the compact board that passes all of these better in the actual hull:
-
-1. read distance through plastic;
-2. reset after power cycling;
-3. no unpowered-SPI backfeed;
-4. no strap-pin boot interference;
-5. charging/NFC coexistence;
-6. physical fit/orientation.
-
-The large blue standard RC522 is not the preferred Defiant board.
-
-R17 target = 10 kΩ unless selected board's onboard reset bias makes it DNP. R18 = 10 kΩ from U1 D0/GPIO2 `NFC_MISO` to `+3V3_ALWAYS`.
+The green compact RC522 and large blue RC522 are retained only as spares and have no active Defiant wire assignments.
 
 ## 17. Unused / superseded
 
 - Q9: DNP.
 - W013/W053: DNP / never reuse.
-- U3 IRQ: NC if present.
+- U3 IRQ: NC.
+- green compact RC522: spare / not installed.
+- large blue standard RC522: spare / not installed.
 - U1 external RESET/BOOT wiring: NC final harness.
 - LED1–LED9: superseded placeholders.
 - reed switches/NTCs: not installed.
@@ -259,13 +232,12 @@ R17 target = 10 kΩ unless selected board's onboard reset bias makes it DNP. R18
 
 1. RX1 output/coil pad labels and measured output.
 2. BT1 protection proof.
-3. choose black vs green compact U3 after bench tests.
-4. selected U3 reset/backfeed behavior.
-5. SK6812 physical count/order.
-6. one-sample phaser polarity confirmation.
-7. SOT carrier pad numbering/orientation.
-8. load/thermal tests for U2/Q1/D1/battery.
+3. U3 V602 reset/backfeed/read-range/charging-coexistence behavior.
+4. SK6812 physical count/order.
+5. one-sample phaser polarity confirmation.
+6. SOT carrier pad numbering/orientation.
+7. load/thermal tests for U2/Q1/D1/battery.
 
 ## 19. Conclusion
 
-The actual MT3608 pad labels are now verified, R6–R9 are fixed at 150 Ω, and both compact RC522 boards have exact visible header mappings that fit the existing frozen GPIO architecture.
+The black XFW-ETLIVE V602 is now the sole active U3 connection table. No black-vs-green selection remains open.
