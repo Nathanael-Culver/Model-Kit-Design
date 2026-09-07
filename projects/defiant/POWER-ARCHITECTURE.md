@@ -1,267 +1,219 @@
 # USS Defiant — Power / Electrical Architecture
 
-**Document status:** **FROZEN v1.0 — functional/topology architecture**  
-**Drawing gate:** remains CLOSED until netlist/pinout/validation are approved.  
-**Rule:** physical module pin labels, passive values, and exact carrier wiring may still be verified later, but the block-level architecture below is now authoritative unless a documented engineering change is approved.
+**Document status:** **FROZEN v1.1 — approved Step-9 policy decisions incorporated**  
+**Drawing gate:** remains CLOSED until physical validation closes the remaining blockers.  
+**Rule:** no silent architecture changes; any future revision must identify the specific problem it solves.
 
 ## 1. Frozen system concept
 
-The Defiant is a sealed, battery-powered model controlled by `U1` (Seeed Studio XIAO ESP32-C3).
+- `BT1` remains permanently connected to `U1` XIAO ESP32-C3.
+- U1 uses deep sleep for low standby draw.
+- The 5 V lighting rail is physically OFF in deep sleep.
+- The MFRC522 3.3 V rail is physically OFF in deep sleep.
+- **Wireless-power-present is the normal deep-sleep wake method for v1.**
+- Wi-Fi, BLE, and NFC do **not** wake the ship from deep sleep; they become available after wake.
+- NFC is allowed to operate while wireless charging is present. If real bench testing later proves unacceptable interference, address that demonstrated problem then.
+- One SK6812 serial data bus serves all addressable lighting.
+- Four pulse phasers remain four independent conventional LED channels.
+- No GPIO expander, touch sensor, audio system, or additional controller is part of the architecture.
 
-- `BT1` remains permanently connected to U1.
-- U1 enters deep sleep for standby.
-- All high-draw lighting hardware is physically power-gated OFF in deep sleep.
-- MFRC522 NFC hardware is physically power-gated OFF in deep sleep.
-- Wireless-power presence wakes U1 and provides the charging/recovery input.
-- The nine accepted addressable lighting zones use **one SK6812 serial data bus**. Physical emitter count/order may differ from logical zone count and is resolved later from hull layout.
-- The four pulse phasers remain four independent conventional LED channels.
-- No GPIO expander, touch sensor, audio system, or additional controller is part of the frozen architecture.
-
-## 2. Frozen voltage domains
+## 2. Voltage domains
 
 | Net/domain | Source | Main consumers | Deep-sleep state |
 |---|---|---|---|
 | `GND` | common system reference | all electronics | connected |
-| `BAT+` | BT1, ~3.0–4.2 V operating range | U1 battery input; switched lighting-input path | present |
-| `WLC_5V_RAW` | RX1 wireless receiver | U1 charging/recovery input through isolation; presence detector | present only while coupled to transmitter |
-| `SYS_5V_IN` | isolated `WLC_5V_RAW` | U1 external 5 V / charger input path | present only while charging |
-| `+3V3_ALWAYS` | U1 onboard 3.3 V regulator | low-current control/sensing circuitry | present while U1 is powered |
-| `+5V_LIGHT_SW` | U2 MT3608, fed through a high-side battery gate | SK6812s, AHCT data buffer, phaser LED supply | **OFF** |
-| `+3V3_NFC_SW` | high-side switched `+3V3_ALWAYS` | U3 MFRC522 | **OFF** |
+| `BAT+` | BT1, ~3.0–4.2 V | U1 battery input; switched lighting-input path | present |
+| `WLC_5V_RAW` | RX1 wireless receiver | U1 charging/recovery path; presence detector | present only while coupled |
+| `SYS_5V_IN` | isolated `WLC_5V_RAW` | U1 external 5 V / charger input | present while charging |
+| `+3V3_ALWAYS` | U1 onboard 3.3 V regulator | low-current control/sensing | present while U1 powered |
+| `+5V_LIGHT_SW` | U2 MT3608 through Q1/Q2 gate | SK6812s, U4, phasers | **OFF** |
+| `+3V3_NFC_SW` | Q7/Q8 switched `+3V3_ALWAYS` | U3 MFRC522 | **OFF** |
 
-## 3. Battery and controller path — frozen
+## 3. Battery/controller path
 
 ```text
 BT1 LiPo
-  ├──> U1 XIAO BAT input  [permanent connection]
-  └──> lighting high-side switch -> U2 MT3608 -> +5V_LIGHT_SW
+  ├──> U1 BAT input  [permanent]
+  └──> Q1/Q2 high-side gate -> U2 MT3608 -> +5V_LIGHT_SW
 ```
 
-U1 stays connected to BT1 at all times and is responsible for control, Wi-Fi/BLE, OTA, deep sleep, wake handling, addressable-lighting data, phasers, and NFC SPI.
+Battery protection remains mandatory. If BT1 is protected, U5 is DNP. If BT1 is an unprotected bare cell, U5 must be fitted before final assembly.
 
-### Battery protection safety gate
-
-The architecture requires normal single-cell LiPo over-charge/over-discharge/short-circuit protection. Whether BT1 already includes that protection is still physically unverified. If BT1 is a protected pack, no added protector is required. If it is an unprotected bare pouch cell, a suitable 1S protection device/module becomes mandatory before final assembly. This is a safety requirement, not an optional feature.
-
-## 4. Wireless charging / recovery / wake — frozen
+## 4. Wireless charging / recovery / wake
 
 ```text
 TX1 XKT-412 ))) RX1
                  │
                  └── WLC_5V_RAW
-                       ├──> Schottky isolation -> SYS_5V_IN -> U1 5V/charger input
-                       └──> resistor-divider/protection -> WLC_PRESENT
-                                                    ├──> one wake-capable U1 GPIO
-                                                    └──> NFC hardware inhibit
+                       ├──> D1 Schottky -> SYS_5V_IN -> U1 5V/charger input
+                       └──> R1/R2 divider -> WLC_PRESENT -> U1 D1/GPIO3
 ```
 
 Frozen behavior:
 
-1. Wireless power is **not** the main 5 V lighting supply. Lighting remains battery -> switched MT3608.
-2. Wireless power feeds U1's validated external-power/charging path through a Schottky isolation device.
-3. `WLC_PRESENT` is a protected 3.3 V-domain logic signal derived from the receiver output; 5 V is never connected directly to an ESP32-C3 GPIO.
-4. `WLC_PRESENT` uses one of the XIAO's deep-sleep wake-capable GPIOs.
-5. If BT1 is deeply depleted, coupling to TX1 provides the recovery/charging path for U1/BT1.
-6. RX1's seller 5 V/2 A claim is not treated as guaranteed until load-tested.
+1. wireless power is not the lighting supply;
+2. lighting remains BT1 -> Q1/Q2 -> U2 -> `+5V_LIGHT_SW`;
+3. wireless power feeds U1 charging/recovery through D1;
+4. `WLC_PRESENT` never connects raw 5 V directly to a GPIO;
+5. `WLC_PRESENT` on D1/GPIO3 is the **only normal deep-sleep wake source in v1**;
+6. applying/enabling the wireless charging field is the normal way to wake a sleeping sealed ship;
+7. after wake, Wi-Fi/BLE/NFC controls may be used normally;
+8. RX1 output capability remains subject to bench measurement.
 
-## 5. Lighting power gate — frozen topology
-
-**The final design uses true high-side input disconnect for U2. MT3608 EN alone is not the primary sleep isolation method.**
-
-```text
-BAT+ -> AO3401A P-MOS high-side switch -> U2 MT3608 VIN -> +5V_LIGHT_SW
-                ^
-                |
-        AO3400A N-MOS helper
-                ^
-                |
-           PERIPH_EN
-```
-
-- AO3401A provides the physical battery disconnect to U2.
-- AO3400A pulls the P-channel gate low when `PERIPH_EN` is asserted.
-- A gate pull-up to `BAT+` makes the lighting rail hardware-default OFF during reset, boot, and deep sleep.
-- Exact gate/pull resistor values are assigned during the netlist/passive-design step.
-- U2 output is adjusted/tested to 5.0 V before LEDs are connected.
-
-## 6. Addressable lighting — frozen architecture
-
-One XIAO GPIO drives one 5 V-level-shifted SK6812 serial bus:
+## 5. Lighting power gate
 
 ```text
-U1 SK_DATA_RAW
-      │
-      v
-SN74AHCT1G125DBVR
-  VCC = +5V_LIGHT_SW
-      │
-      v
-series data resistor
-      │
-      v
-SK6812 -> SK6812 -> ... -> final physical emitter
+BAT+ -> Q1 AO3401A P-MOS -> U2 MT3608 -> +5V_LIGHT_SW
+              ^
+              |
+          Q2 AO3400A
+              ^
+              |
+          PERIPH_EN
 ```
 
-Frozen rules:
+- Q1 physically disconnects U2 from BAT+.
+- Q2 pulls Q1 gate low when `PERIPH_EN` is HIGH.
+- R3 pulls Q1 gate to BAT+ for hardware-default OFF.
+- R4 pulls `PERIPH_EN` LOW for hardware-default OFF.
+- MT3608 EN is not relied upon for sleep isolation.
 
-- **One independent SK6812 data line only.**
-- One SN74AHCT1G125DBVR is therefore required in the final architecture.
-- Its `OE` does **not** consume an MCU GPIO; it is hardware-configured so the buffer is usable whenever the switched 5 V rail is valid.
-- The buffer gets a local ceramic bypass capacitor.
-- Historical 330 Ω data-series and 470 µF bulk-capacitor values remain provisional until the passive calculation/review step.
-- The nine logical zones P0–P8 are preserved; firmware maps physical emitter indices/groups to those logical zones.
-
-## 7. Pulse-phaser architecture — frozen
-
-There are four independent conventional white-LED channels:
+## 6. Addressable lighting
 
 ```text
-+5V_LIGHT_SW -> current-limit network -> phaser LED -> AO3400A -> GND
-                                                     ^
-                                                     |
-                                              U1 PHx_GATE
+U1 SK_DATA_RAW -> U4 SN74AHCT1G125 -> R5 -> one SK6812 serial chain
 ```
 
-- Four phasers = four AO3400A low-side switch channels.
-- Each channel consumes one U1 GPIO.
-- Each gate receives a hardware default-OFF pull-down.
-- Exact LED resistor values are **not** frozen until the actual prewired 0805 LEDs are measured/identified.
-- Phaser LEDs are powered from the switched lighting rail, so they are physically dead in deep sleep.
+- one addressable data line only;
+- one U4 level-shifter;
+- U4 powered from `+5V_LIGHT_SW`;
+- C1 local bypass at U4;
+- R5 330 Ω formal starting value;
+- P0–P8 are logical zones, not physical LED counts.
 
-## 8. NFC architecture — frozen
+## 7. Pulse phasers
 
-U3 remains the MFRC522 SPI module.
+Each channel:
 
-Required MCU signals:
+```text
++5V_LIGHT_SW -> R6/R7/R8/R9 as required -> LED -> Q3/Q4/Q5/Q6 -> GND
+```
+
+Each gate has a hardware pull-down. R6–R9 remain unresolved until the exact prewired LED configuration is measured.
+
+## 8. NFC architecture
+
+U3 uses SPI:
 
 - `NFC_SCK`
 - `NFC_MOSI`
 - `NFC_MISO`
 - `NFC_CS`
 
-No dedicated MCU GPIO is allocated to MFRC522 IRQ or reset.
+No MCU IRQ or reset GPIO is allocated.
 
 ### NFC supply gate
 
 ```text
-+3V3_ALWAYS -> AO3401A P-MOS -> +3V3_NFC_SW -> U3 MFRC522
-                       ^
-                       |
-                AO3400A enable helper
-                       ^
-                       |
-            conditioned PERIPH_EN
++3V3_ALWAYS -> Q7 AO3401A -> +3V3_NFC_SW -> U3
+                    ^
+                    |
+                Q8 AO3400A
+                    ^
+                    |
+              PERIPH_EN via R15
 ```
 
-The NFC rail is default OFF and physically disconnected in deep sleep.
+- R14 makes Q7 default OFF.
+- R16 makes Q8 default OFF.
+- `PERIPH_EN` enables the NFC rail through R15/Q8.
+- **Q9 is DNP.** `WLC_PRESENT` does not inhibit NFC power.
+- NFC may operate while wireless charging is present.
 
-### NFC reset
+If bench testing later proves wireless-power/NFC interference, document the measured failure before adding mitigation.
 
-MFRC522 reset/power-down is handled by the switched-power/reset arrangement rather than consuming a dedicated U1 GPIO. Exact passive connection to the breakout's RST/NRSTPD pin is finalized after the exact module header is verified.
+## 9. GPIO budget
 
-### Wireless-power / NFC interlock — frozen requirement
-
-The MFRC522 must **not operate while wireless charging is present**. To enforce this without spending another MCU GPIO, `WLC_PRESENT` also acts as a hardware inhibit on the NFC gate:
-
-```text
-NFC power allowed = PERIPH_EN AND NOT WLC_PRESENT
-```
-
-Implementation uses the already-purchased AO3400A/AO3401A devices and resistors; no new logic IC is required. This permits the 5 V lighting rail to remain available while docked/charging, while NFC stays physically off.
-
-## 9. Master peripheral enable / GPIO budget — frozen concept
-
-The design uses **one MCU `PERIPH_EN` output** for peripheral-power control.
-
-Functional GPIO budget:
-
-| Function | GPIO count |
+| Function | Count |
 |---|---:|
-| one SK6812 serial data bus | 1 |
-| four independent phasers | 4 |
-| MFRC522 SPI: SCK/MOSI/MISO/CS | 4 |
-| `WLC_PRESENT` wake input | 1 |
+| one SK6812 data bus | 1 |
+| four phasers | 4 |
+| MFRC522 SPI | 4 |
+| `WLC_PRESENT` wake | 1 |
 | `PERIPH_EN` | 1 |
-| **Total** | **11** |
+| **Total** | **11 / 11** |
 
-This intentionally uses the XIAO's full exposed GPIO budget but requires no GPIO expander. Final assignment to D0–D10 is Step 6 and must account for ESP32-C3 strapping/boot behavior.
+Q9 removal does not change the GPIO budget because it never consumed an MCU GPIO.
 
-## 10. Deep-sleep hardware state — frozen
+## 10. Deep-sleep behavior
 
-Before entering deep sleep, firmware must:
+Before sleep firmware must:
 
-1. stop addressable-lighting updates and put the SK data output in a benign state;
-2. force PH0–PH3 OFF;
-3. leave NFC SPI lines in a state that cannot backfeed the unpowered module;
+1. turn off logical lighting and phasers;
+2. place SK data in a benign LOW state;
+3. place SPI outputs in a state that does not back-power U3;
 4. deassert `PERIPH_EN`;
 5. verify `+5V_LIGHT_SW` and `+3V3_NFC_SW` collapse;
-6. configure `WLC_PRESENT` as the defined wake source;
+6. configure `WLC_PRESENT` on D1/GPIO3 as the wake source;
 7. enter deep sleep.
 
-Hardware pull resistors ensure lighting, NFC, and phasers remain OFF even before firmware has configured GPIOs.
+While asleep, Wi-Fi/BLE/NFC are unavailable. The user wakes the model by applying wireless charging power.
 
-## 11. Wake / charging behavior — frozen
+## 11. Wake / charging behavior
 
 When wireless power appears:
 
-1. RX1 produces `WLC_5V_RAW`.
-2. U1 receives external/charging power through the isolation path.
-3. `WLC_PRESENT` wakes U1 if it was asleep.
-4. Hardware keeps NFC inhibited while wireless power remains present.
-5. Firmware checks power/battery conditions before enabling high-current lighting.
-6. Lighting may operate from BT1/U2 while charging if power/thermal tests permit; the architecture does not require the XKT receiver to directly supply the lighting rail.
+1. RX1 produces `WLC_5V_RAW`;
+2. U1 receives charging/recovery power through D1;
+3. `WLC_PRESENT` wakes U1;
+4. firmware enters a safe boot/recovery state;
+5. after supply checks, `PERIPH_EN` may enable lighting and NFC;
+6. NFC is allowed while charging;
+7. firmware must avoid blindly enabling maximum lighting load during recovery/low-battery conditions.
 
-## 12. Things intentionally NOT in the architecture
+## 12. Intentionally excluded
 
 - GPIO expander
 - TTP223 touch module
 - speaker/audio
-- separate addressable-lighting data buses
+- second SK6812 data bus
 - dedicated MFRC522 IRQ GPIO
 - dedicated MFRC522 reset GPIO
 - always-powered MFRC522
+- Q9 charging/NFC inhibit
 - MT3608 EN-only sleep isolation
-- reed-switch wake (purchased reed switches remain spare inventory unless a later approved feature specifically requires one)
-- NTC monitoring (purchased NTCs remain spare inventory unless later justified)
+- reed-switch wake
+- NTC monitoring
+- Wi-Fi/BLE/NFC deep-sleep wake in v1
 
-## 13. Implementation checks that remain open but do not alter the frozen block architecture
+## 13. Remaining physical checks
 
-1. Verify BT1 protection status.
-2. Photograph/identify exact RX1 pads and loaded output behavior.
-3. Verify U1 charging/recovery through the proposed Schottky input path.
-4. Photograph/identify U2 module and set/load-test 5 V output.
-5. Photograph/identify U3 header/RST behavior.
-6. Verify unpowered U3 does not backfeed through SPI with the final pin assignment.
-7. Confirm physical SK6812 emitter count/order.
-8. Identify prewired 0805 resistor/current characteristics.
-9. Calculate all gate pulls, LED current resistors, divider values, decoupling, and bulk capacitance.
+1. BT1 protection/discharge capability.
+2. RX1 polarity, unloaded/loaded voltage/current/temperature.
+3. D1 charge/recovery/reverse-current behavior.
+4. U2 5 V load/thermal capability and Q1 carrier current capability.
+5. exact U3 header/reset/unpowered-I/O behavior.
+6. phaser LED current-limit determination.
+7. physical SK6812 count/order/decoupling/load.
+8. repeated boot/reset/deep-sleep -> wireless-wake cycles.
+9. final distribution-board/harness implementation.
+10. Wi-Fi/BLE/NFC/OTA integrated tests before sealing.
 
-Any failure here may trigger a documented engineering-change review, but none is currently a reason to redesign the architecture preemptively.
-
-## 14. Architecture freeze summary
-
-**Frozen topology:**
+## 14. Frozen topology summary
 
 ```text
-                 RX1 wireless receiver
-                      │
-              ┌───────┴────────┐
-              │                │
-       Schottky -> U1 5V   WLC_PRESENT -> U1 wake
-              │                └────────> NFC inhibit
-             U1
-     XIAO ESP32-C3
-       │   │    │
-       │   │    └── SPI ─────────────> U3 MFRC522 on gated 3.3 V
-       │   └──── PH0–PH3 ────────────> 4x AO3400A phaser switches
-       └──────── SK data -> AHCT ─────> one SK6812 serial bus
-       │
-       └──────── PERIPH_EN
-                   ├──> battery high-side gate -> MT3608 -> +5V_LIGHT_SW
-                   └──> NFC high-side gate, inhibited by WLC_PRESENT
+RX1 -> D1 -> U1 5V/charger
+  └----> R1/R2 -> WLC_PRESENT -> U1 wake
 
 BT1 -> U1 permanently
-BT1 -> switched MT3608 lighting path
+BT1 -> Q1/Q2 -> U2 -> +5V_LIGHT_SW
+
+U1 SK data -> U4 -> one SK6812 chain
+U1 PH0..PH3 -> Q3..Q6 -> four phasers
+U1 PERIPH_EN -> Q2 lighting gate
+                └-> R15/Q8 -> Q7 -> +3V3_NFC_SW -> U3
+
+Q9 = DNP
 ```
 
-This is the electrical architecture to use for the remaining design steps unless explicitly revised in Git.
+This v1.1 architecture incorporates the user's explicit approval to allow NFC while charging and to use wireless charging presence as the normal deep-sleep wake method.
