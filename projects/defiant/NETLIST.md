@@ -1,10 +1,11 @@
 # USS Defiant — Authoritative Netlist
 
-**Document status:** **FORMAL v1.4 — black V602 U3 selection incorporated / NOT YET DRAWING-APPROVED**  
+**Document status:** **FORMAL v1.5 — 14-pixel lighting chain incorporated / NOT YET DRAWING-APPROVED**  
 **Architecture source:** `POWER-ARCHITECTURE.md` FROZEN v1.1  
-**Designator source:** `DESIGNATORS.md` FROZEN v1.4  
+**Designator source:** `DESIGNATORS.md` FROZEN v1.6  
 **Pin source:** `PINOUT.md` FROZEN v1.0  
-**Drawing use:** PROHIBITED until physical validation closes the remaining blockers.
+**Lighting source:** `LIGHTING-LAYOUT.md` FROZEN v1.0  
+**Drawing use:** PROHIBITED until physical validation closes remaining blockers.
 
 ## 1. U1 XIAO ESP32-C3 — frozen signal assignment
 
@@ -42,36 +43,38 @@ If BT1 is unprotected, U5 must be fitted:
 - `BAT+` -> U1 BAT+
 - `GND` -> U1 BAT-
 
-Current photograph strongly suggests an end-mounted protection PCB but does not prove it; this branch decision remains OPEN.
+Battery-protection branch decision remains OPEN pending safe evidence.
 
 ## 3. Common ground
 
-`GND` connects U1, RX1 negative, U2 IN-/OUT-, U3 GND, U4 pin 3, Q2/Q3/Q4/Q5/Q6/Q8 sources, all SK6812 grounds, sensing-divider return, pull-down resistors, and capacitor returns.
+`GND` connects U1, RX1 negative, U2 VIN-/VOUT-, U3 GND, U4 pin 3, Q2/Q3/Q4/Q5/Q6/Q8 sources, all SK6812 grounds, divider returns, pull-down resistors, and capacitor returns.
 
 Q9 is DNP and has no electrical connection.
 
 ## 4. Wireless-power / charging path
 
-- RX1 positive -> `WLC_5V_RAW`
-- RX1 negative -> `GND`
+- RX1 = XKT-3168 receiver module.
+- TX1 = XKT-412 transmitter module.
+- RX1 positive output -> `WLC_5V_RAW`
+- RX1 negative output -> `GND`
 - D1 anode -> `WLC_5V_RAW`
 - D1 cathode / marked-bar end -> `SYS_5V_IN`
-- `SYS_5V_IN` -> U1 5 V external-input pin/pad
+- `SYS_5V_IN` -> U1 5V/VBUS external-input pad
 
 D1 permits RX1 -> U1 current and blocks reverse feed toward RX1.
+
+The XKT pair is treated as the selected 5 V / 2 A wireless-power hardware. Polarity/voltage/load/thermal verification remains an integrated bench acceptance item rather than a pre-design blocker.
 
 ## 5. Wireless-present detector / wake
 
 - R1 = 130 kΩ: `WLC_5V_RAW` -> `WLC_PRESENT`
 - R2 = 180 kΩ: `WLC_PRESENT` -> `GND`
-- `WLC_PRESENT` -> U1 D1 / GPIO3 only
+- `WLC_PRESENT` -> U1 D1/GPIO3
 
 Approved v1 wake policy:
 
 - applying/enabling wireless charging wakes the ship;
 - Wi-Fi/BLE/NFC do not wake U1 from deep sleep.
-
-Actual RX1 maximum output voltage remains to be measured before attaching this divider to U1.
 
 ## 6. Lighting input power gate
 
@@ -97,29 +100,27 @@ Actual RX1 maximum output voltage remains to be measured before attaching this d
 
 `PERIPH_EN` -> U1 D7/GPIO20.
 
-## 7. U2 MT3608 — physical board identified
+## 7. U2 MT3608
 
-Photographed U2 has visible pads:
+Actual board pads:
 
 - `VIN+` -> `U2_VIN_SW`
 - `VIN-` -> `GND`
 - `VOUT+` -> `+5V_LIGHT_SW`
 - `VOUT-` -> `GND`
 
-No external EN pad is visible on the actual board. The design retains the frozen Q1/Q2 battery-side input disconnect; do not modify the MT3608 IC itself for normal assembly.
-
-Adjust/load-test U2 to 5.0 V before LEDs are connected.
+No external EN pad is used. Q1/Q2 provides true input disconnect. U2 is adjusted to 5.0 V before lighting connection.
 
 ## 8. +5 V lighting rail
 
 `+5V_LIGHT_SW` feeds:
 
-- U4 pin 5
-- all physical SK6812 VDD pins
-- R6–R9 phaser branches
-- C2 positive
+- U4 pin 5;
+- LED14–LED27 VDD through the final power-distribution harness;
+- R6–R9 phaser branches;
+- C2 positive.
 
-C2 target = 470 µF, >=6.3 V; 10 V preferred if size permits.
+C2 target = 470 µF, >=6.3 V; 10 V preferred if size permits. Final acceptance is based on the measured 14-pixel integrated load.
 
 ## 9. U4 SN74AHCT1G125
 
@@ -133,67 +134,78 @@ C2 target = 470 µF, >=6.3 V; 10 V preferred if size permits.
 
 - C1 = 0.1 µF ceramic between VCC and GND, local to U4.
 - R5 = 330 Ω from `SK_DATA_5V` to `SK_DIN_FIRST`.
+- `SK_DIN_FIRST` -> LED14 DIN.
 
-## 10. Physical SK6812 chain — exact strip verified
+## 10. Frozen physical SK6812 chain
 
-Exact stock is BTF-LIGHTING SK6812 RGBW Natural White, 5 V, 144 LED/m, black IP30 flexible strip.
+Exact stock: BTF-LIGHTING SK6812 RGBW Natural White, 5 V, 144 LED/m, black IP30 flexible strip.
 
-One serial chain only:
+**Physical count = 14 emitters, LED14–LED27.**
 
-```text
-SK_DIN_FIRST -> LED14 DIN
-LED14 DOUT -> LED15 DIN
-LED15 DOUT -> LED16 DIN
-... -> final physical SK6812
-```
+| Ref | Index | Logical zone | Physical feature | Data input |
+|---|---:|---|---|---|
+| LED14 | 0 | P0 | deflector top | `SK_DIN_FIRST` / W023 |
+| LED15 | 1 | P0 | deflector bottom | LED14 DOUT / W054 |
+| LED16 | 2 | P1 | port bussard | LED15 DOUT / W055 |
+| LED17 | 3 | P3 | port chiller forward | LED16 DOUT / W056 |
+| LED18 | 4 | P3 | port chiller aft | LED17 DOUT / W057 |
+| LED19 | 5 | P5 | port impulse crystal A | LED18 DOUT / W058 |
+| LED20 | 6 | P5 | port impulse crystal B | LED19 DOUT / W059 |
+| LED21 | 7 | P7 | port impulse engine | LED20 DOUT / W060 |
+| LED22 | 8 | P8 | starboard impulse engine | LED21 DOUT / W061 |
+| LED23 | 9 | P6 | starboard impulse crystal B | LED22 DOUT / W062 |
+| LED24 | 10 | P6 | starboard impulse crystal A | LED23 DOUT / W063 |
+| LED25 | 11 | P4 | starboard chiller aft | LED24 DOUT / W064 |
+| LED26 | 12 | P4 | starboard chiller forward | LED25 DOUT / W065 |
+| LED27 | 13 | P2 | starboard bussard | LED26 DOUT / W066 |
 
-Every physical SK6812 section:
+LED27 DOUT -> NC unless a deliberate test point is later approved.
 
-- VDD -> `+5V_LIGHT_SW`
-- GND -> `GND`
-- retain the complete manufacturer-defined cut section and its local SMD support components
+Every LED14–LED27:
 
-Physical emitter count/order remains OPEN. P0–P8 are firmware logical zones and may map to one or multiple physical emitters.
+- VDD -> `+5V_LIGHT_SW`;
+- GND -> `GND`;
+- retain the complete manufacturer-defined cut section and its local SMD support components.
 
-## 11. Pulse-phaser channels — current limiting closed
+**Data is serial/daisy-chained. Power and ground may be distributed in parallel trunks/branches and are not required to follow the data chain.**
 
-Exact LEDs are DiCUNO prewired white 0805 devices, listed 2.8–3.3 V forward voltage and 20 mA. No series resistor is specified or shown in the prewired product.
+## 11. Pulse-phaser channels
 
-Use **150 Ω, >=1/8 W** for each channel. At 5.0 V this gives approximately 11.3–14.7 mA across the listed Vf range.
+Exact LEDs: DiCUNO prewired white 0805, 2.8–3.3 V, 20 mA listed.
+
+Use **R6–R9 = 150 Ω, >=1/8 W**.
 
 ### PH0
 
-- `+5V_LIGHT_SW` -> **R6 = 150 Ω** -> LED10 anode
+- `+5V_LIGHT_SW` -> R6 -> LED10 anode
 - LED10 cathode -> Q3 drain
-- Q3 source -> `GND`
+- Q3 source -> GND
 - Q3 gate -> `PH0_GATE` -> U1 D2/GPIO4
-- R10 = 100 kΩ `PH0_GATE` -> `GND`
+- R10 = 100 kΩ gate -> GND
 
 ### PH1
 
-- `+5V_LIGHT_SW` -> **R7 = 150 Ω** -> LED11 anode
+- `+5V_LIGHT_SW` -> R7 -> LED11 anode
 - LED11 cathode -> Q4 drain
-- Q4 source -> `GND`
+- Q4 source -> GND
 - Q4 gate -> `PH1_GATE` -> U1 D3/GPIO5
-- R11 = 100 kΩ `PH1_GATE` -> `GND`
+- R11 = 100 kΩ gate -> GND
 
 ### PH2
 
-- `+5V_LIGHT_SW` -> **R8 = 150 Ω** -> LED12 anode
+- `+5V_LIGHT_SW` -> R8 -> LED12 anode
 - LED12 cathode -> Q5 drain
-- Q5 source -> `GND`
+- Q5 source -> GND
 - Q5 gate -> `PH2_GATE` -> U1 D4/GPIO6
-- R12 = 100 kΩ `PH2_GATE` -> `GND`
+- R12 = 100 kΩ gate -> GND
 
 ### PH3
 
-- `+5V_LIGHT_SW` -> **R9 = 150 Ω** -> LED13 anode
+- `+5V_LIGHT_SW` -> R9 -> LED13 anode
 - LED13 cathode -> Q6 drain
-- Q6 source -> `GND`
+- Q6 source -> GND
 - Q6 gate -> `PH3_GATE` -> U1 D5/GPIO7
-- R13 = 100 kΩ `PH3_GATE` -> `GND`
-
-Before duplicating all four physical channels, verify one actual LED's polarity and operation with current limiting.
+- R13 = 100 kΩ gate -> GND
 
 ## 12. NFC high-side gate
 
@@ -203,65 +215,37 @@ Before duplicating all four physical channels, verify one actual LED's polarity 
 - drain -> `+3V3_NFC_SW`
 - gate -> `NFC_GATE`
 
-### R14
-
-- 100 kΩ: `NFC_GATE` -> `+3V3_ALWAYS`
-
 ### Q8 AO3400A
 
 - drain -> `NFC_GATE`
-- source -> `GND`
+- source -> GND
 - gate -> `NFC_EN_GATE`
 
-### R15 / R16
+- R14 = 100 kΩ `NFC_GATE` -> `+3V3_ALWAYS`
+- R15 = 10 kΩ `PERIPH_EN` -> `NFC_EN_GATE`
+- R16 = 100 kΩ `NFC_EN_GATE` -> GND
 
-- R15 = 10 kΩ: `PERIPH_EN` -> `NFC_EN_GATE`
-- R16 = 100 kΩ: `NFC_EN_GATE` -> `GND`
+Q9 is DNP. `NFC_POWER = PERIPH_EN`, including while wireless charging is active.
 
-Q9 is DNP. Therefore `NFC_POWER = PERIPH_EN`, including while wireless charging is active.
+## 13. U3 — black XFW-ETLIVE V602
 
-## 13. U3 — black XFW-ETLIVE V602 compact reader
-
-**U3 is frozen as the black XFW-ETLIVE V602 compact 3.3 V SPI RC522-class reader.**
-
-Photographed header order, top-to-bottom as printed:
-
-1. `SDA`
-2. `SCK`
-3. `MOSI`
-4. `MISO`
-5. `IRQ`
-6. `GND`
-7. `RST`
-8. `3V3`
-
-### Frozen U3 mapping
-
-| U3 printed pin | Net | U1 endpoint / use |
+| U3 printed pin | Net | U1 endpoint/use |
 |---|---|---|
-| `SDA` | `NFC_CS` | U1 D6 / GPIO21 |
-| `SCK` | `NFC_SCK` | U1 D8 / GPIO8 |
-| `MOSI` | `NFC_MOSI` | U1 D10 / GPIO10 |
-| `MISO` | `NFC_MISO` | U1 D0 / GPIO2 |
+| `SDA` | `NFC_CS` | U1 D6/GPIO21 |
+| `SCK` | `NFC_SCK` | U1 D8/GPIO8 |
+| `MOSI` | `NFC_MOSI` | U1 D10/GPIO10 |
+| `MISO` | `NFC_MISO` | U1 D0/GPIO2 |
 | `IRQ` | NC | no connection |
-| `GND` | `GND` | system GND |
-| `RST` | reset-bias network | R17 to switched 3.3 V unless bench test proves onboard bias sufficient |
+| `GND` | GND | system GND |
+| `RST` | reset-bias network | R17 to switched 3.3 V unless bench test makes R17 DNP |
 | `3V3` | `+3V3_NFC_SW` | Q7-switched supply |
 
-### R17
-
-- target 10 kΩ from U3 `RST` -> `+3V3_NFC_SW`
-- may become DNP only if the selected V602 board's onboard circuitry provides suitable reset bias and power-cycle behavior in bench testing
-
-### R18
-
-- 10 kΩ from `NFC_MISO` / U1 D0/GPIO2 -> `+3V3_ALWAYS`
-
-The green compact RC522 and large blue RC522 are spares and are not part of the active netlist.
+- R17 target = 10 kΩ from RST -> `+3V3_NFC_SW`.
+- R18 = 10 kΩ from `NFC_MISO`/GPIO2 -> `+3V3_ALWAYS`.
 
 ## 14. Required reset/deep-sleep states
 
-| Net | Required hardware state |
+| Net | Required state |
 |---|---|
 | `PERIPH_EN` | LOW via R4 |
 | `LIGHT_GATE` | HIGH to BAT+ via R3 -> Q1 OFF |
@@ -276,16 +260,16 @@ The green compact RC522 and large blue RC522 are spares and are not part of the 
 ## 15. Remaining blockers before drawing approval
 
 1. BT1 protection/discharge capability proof;
-2. RX1 pad identity/loaded voltage/current/temperature;
-3. D1 charging/recovery/reverse-current/thermal test;
-4. U2 load/thermal test and Q1 carrier-current test;
-5. V602 U3 reset/read-range/unpowered-SPI/backfeed test;
-6. D0/D8 boot safety with V602 attached/off;
-7. D9 boot safety with U4 attached/off;
-8. D1/GPIO3 wireless deep-sleep wake test;
-9. physical SK6812 emitter count/order and full lighting load;
-10. integrated charging/NFC coexistence and final distribution implementation.
+2. integrated XKT/D1 charging/recovery/load/thermal verification;
+3. U2 load/thermal test and Q1 carrier-current test;
+4. V602 reset/read-range/unpowered-SPI/backfeed test;
+5. D0/D8 boot safety with V602 attached/off;
+6. D9 boot safety with U4 attached/off;
+7. D1/GPIO3 wireless deep-sleep wake test;
+8. measured 14-pixel lighting power envelope and firmware brightness/current cap;
+9. final +5V/GND pixel power-distribution geometry and wire sizes/lengths;
+10. integrated charging/NFC coexistence and OTA/control testing.
 
 ## 16. Current conclusion
 
-The active U3 part is no longer a selection question: **black XFW-ETLIVE V602 is frozen.** Remaining NFC work is validation of that exact board, not comparison with alternates.
+The physical SK6812 count and data chain are no longer open: **14 emitters, LED14–LED27, one serial data bus**. Remaining lighting work concerns physical placement, power distribution, wire sizing, and measured load—not emitter count or logical mapping.
