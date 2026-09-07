@@ -1,8 +1,8 @@
 # USS Defiant — Authoritative Netlist
 
-**Document status:** **FORMAL v1.3 — Step-9b physical evidence incorporated / NOT YET DRAWING-APPROVED**  
+**Document status:** **FORMAL v1.4 — black V602 U3 selection incorporated / NOT YET DRAWING-APPROVED**  
 **Architecture source:** `POWER-ARCHITECTURE.md` FROZEN v1.1  
-**Designator source:** `DESIGNATORS.md` FROZEN v1.3  
+**Designator source:** `DESIGNATORS.md` FROZEN v1.4  
 **Pin source:** `PINOUT.md` FROZEN v1.0  
 **Drawing use:** PROHIBITED until physical validation closes the remaining blockers.
 
@@ -99,14 +99,14 @@ Actual RX1 maximum output voltage remains to be measured before attaching this d
 
 ## 7. U2 MT3608 — physical board identified
 
-Photographed U2 is the common adjustable MT3608 board with visible pads:
+Photographed U2 has visible pads:
 
 - `VIN+` -> `U2_VIN_SW`
 - `VIN-` -> `GND`
 - `VOUT+` -> `+5V_LIGHT_SW`
 - `VOUT-` -> `GND`
 
-No external EN pad is visible on the actual board. The design therefore retains the already-frozen Q1/Q2 battery-side input disconnect; do not modify the MT3608 IC itself for normal assembly.
+No external EN pad is visible on the actual board. The design retains the frozen Q1/Q2 battery-side input disconnect; do not modify the MT3608 IC itself for normal assembly.
 
 Adjust/load-test U2 to 5.0 V before LEDs are connected.
 
@@ -157,7 +157,7 @@ Physical emitter count/order remains OPEN. P0–P8 are firmware logical zones an
 
 ## 11. Pulse-phaser channels — current limiting closed
 
-Exact LEDs are DiCUNO prewired white 0805 devices, listed 2.8–3.3 V forward voltage and 20 mA maximum/listed current. No series resistor is specified or shown in the prewired product.
+Exact LEDs are DiCUNO prewired white 0805 devices, listed 2.8–3.3 V forward voltage and 20 mA. No series resistor is specified or shown in the prewired product.
 
 Use **150 Ω, >=1/8 W** for each channel. At 5.0 V this gives approximately 11.3–14.7 mA across the listed Vf range.
 
@@ -193,7 +193,7 @@ Use **150 Ω, >=1/8 W** for each channel. At 5.0 V this gives approximately 11.3
 - Q6 gate -> `PH3_GATE` -> U1 D5/GPIO7
 - R13 = 100 kΩ `PH3_GATE` -> `GND`
 
-Before duplicating all four physical channels, verify one actual LED's polarity and operation with current limiting; R6–R9 no longer remain unspecified.
+Before duplicating all four physical channels, verify one actual LED's polarity and operation with current limiting.
 
 ## 12. NFC high-side gate
 
@@ -220,68 +220,44 @@ Before duplicating all four physical channels, verify one actual LED's polarity 
 
 Q9 is DNP. Therefore `NFC_POWER = PERIPH_EN`, including while wireless charging is active.
 
-## 13. U3 compact RC522-class reader
+## 13. U3 — black XFW-ETLIVE V602 compact reader
 
-The large blue standard RC522 is mechanically disfavored and not the intended final U3.
+**U3 is frozen as the black XFW-ETLIVE V602 compact 3.3 V SPI RC522-class reader.**
 
-Two compact boards on hand fit the frozen electrical interface:
+Photographed header order, top-to-bottom as printed:
 
-### Primary candidate — black XFW-ETLIVE V602
+1. `SDA`
+2. `SCK`
+3. `MOSI`
+4. `MISO`
+5. `IRQ`
+6. `GND`
+7. `RST`
+8. `3V3`
 
-Visible header order:
+### Frozen U3 mapping
 
-1. SDA / SS / CS
-2. SCK
-3. MOSI
-4. MISO
-5. IRQ
-6. GND
-7. RST
-8. 3V3
-
-- IRQ -> NC
-- other functions map directly to the nets below
-- integrated antenna / compact board class
-- board family is approximately 36 x 25 x 4 mm
-- photographed IC appears RC522-compatible / FM17522-class; bench firmware-version readback required
-
-### Alternate — green RC522 MINI V1.1-style
-
-Visible header order:
-
-1. NSS
-2. SCK
-3. MOSI
-4. MISO
-5. RST
-6. GND
-7. 3.3V
-
-No IRQ is exposed, which is acceptable because IRQ is unused.
-
-### Frozen functional mapping for either compact board
-
-| U3 function | Net | U1 endpoint |
+| U3 printed pin | Net | U1 endpoint / use |
 |---|---|---|
-| VCC / 3.3 V | `+3V3_NFC_SW` | switched supply |
-| GND | `GND` | GND |
-| SCK | `NFC_SCK` | D8 / GPIO8 |
-| MOSI | `NFC_MOSI` | D10 / GPIO10 |
-| MISO | `NFC_MISO` | D0 / GPIO2 |
-| SDA/SS/NSS/CS | `NFC_CS` | D6 / GPIO21 |
-| IRQ | NC if present | none |
-| RST | reset-bias network | none |
+| `SDA` | `NFC_CS` | U1 D6 / GPIO21 |
+| `SCK` | `NFC_SCK` | U1 D8 / GPIO8 |
+| `MOSI` | `NFC_MOSI` | U1 D10 / GPIO10 |
+| `MISO` | `NFC_MISO` | U1 D0 / GPIO2 |
+| `IRQ` | NC | no connection |
+| `GND` | `GND` | system GND |
+| `RST` | reset-bias network | R17 to switched 3.3 V unless bench test proves onboard bias sufficient |
+| `3V3` | `+3V3_NFC_SW` | Q7-switched supply |
 
 ### R17
 
-- target 10 kΩ from U3 RST -> `+3V3_NFC_SW`
-- may become DNP if the selected compact board already provides suitable reset bias and power-cycle behavior
+- target 10 kΩ from U3 `RST` -> `+3V3_NFC_SW`
+- may become DNP only if the selected V602 board's onboard circuitry provides suitable reset bias and power-cycle behavior in bench testing
 
 ### R18
 
 - 10 kΩ from `NFC_MISO` / U1 D0/GPIO2 -> `+3V3_ALWAYS`
 
-Final black-vs-green selection is a bench/mechanical choice based on read range, reset behavior, unpowered-SPI backfeed, and fit—not an architecture change.
+The green compact RC522 and large blue RC522 are spares and are not part of the active netlist.
 
 ## 14. Required reset/deep-sleep states
 
@@ -303,8 +279,8 @@ Final black-vs-green selection is a bench/mechanical choice based on read range,
 2. RX1 pad identity/loaded voltage/current/temperature;
 3. D1 charging/recovery/reverse-current/thermal test;
 4. U2 load/thermal test and Q1 carrier-current test;
-5. compact U3 black-vs-green selection after backfeed/reset/read-range test;
-6. D0/D8 boot safety with selected U3 attached/off;
+5. V602 U3 reset/read-range/unpowered-SPI/backfeed test;
+6. D0/D8 boot safety with V602 attached/off;
 7. D9 boot safety with U4 attached/off;
 8. D1/GPIO3 wireless deep-sleep wake test;
 9. physical SK6812 emitter count/order and full lighting load;
@@ -312,4 +288,4 @@ Final black-vs-green selection is a bench/mechanical choice based on read range,
 
 ## 16. Current conclusion
 
-The exact MT3608 board form, addressable-strip product, and phaser LED product are now identified. The only prior electrical `ERROR`—phaser current limiting—is closed with R6–R9 = 150 Ω. Two compact RC522 boards are viable without changing the frozen GPIO map or architecture.
+The active U3 part is no longer a selection question: **black XFW-ETLIVE V602 is frozen.** Remaining NFC work is validation of that exact board, not comparison with alternates.
