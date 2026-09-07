@@ -1,6 +1,6 @@
 # USS Defiant — Reference Designators
 
-**Document status:** **FROZEN v1.4**  
+**Document status:** **FROZEN v1.5**  
 **Applies to:** all subsequent netlists, schematics, wire lists, assembly instructions, bench layouts, photographs, and firmware documentation.
 
 ## 1. Numbering rules
@@ -16,8 +16,8 @@
 |---|---|---|---|
 | U1 | Seeed Studio XIAO ESP32-C3 | master MCU / Wi-Fi / BLE / OTA / deep sleep | **FROZEN** |
 | BT1 | 103450 3.7 V 2500 mAh LiPo | internal battery | **FROZEN identity; protection status OPEN** |
-| RX1 | XKT high-current wireless-power receiver, apparent XKT-3168 IC | wireless power / charge input / wake-presence source | **FROZEN identity class; exact module revision OPEN** |
-| TX1 | XKT-412 wireless-power transmitter | external charging/power base | **FROZEN** |
+| RX1 | **XKT-3168 wireless-power receiver module + flat spiral coil** | wireless power / charge input / wake-presence source | **FROZEN / PHYSICALLY IDENTIFIED; electrical output still bench-verify** |
+| TX1 | **XKT-412 wireless-power transmitter module + flat spiral coil** | external charging/power base | **FROZEN / PHYSICALLY IDENTIFIED** |
 | U2 | photographed adjustable MT3608 boost-converter module | switched battery -> 5 V lighting rail | **FROZEN / physical pad form VERIFIED** |
 | U3 | **black XFW-ETLIVE V602 compact 3.3 V SPI RC522-class reader** | memory-crystal/NFC reader | **FROZEN / USER SELECTED** |
 | U4 | TI SN74AHCT1G125DBVR | 3.3 V -> 5 V SK6812 data buffer | **FROZEN** |
@@ -102,7 +102,9 @@ The exact BTF-LIGHTING 144 LED/m SK6812 strip is physically/product-identified; 
 
 ## 9. Summary
 
-- U3 is now definitively the black XFW-ETLIVE V602 compact reader
+- RX1 is now definitively the photographed **XKT-3168 receiver module**; voltage/current/polarity are still bench-verified before connection
+- TX1 is definitively the photographed **XKT-412 transmitter module**
+- U3 is definitively the black XFW-ETLIVE V602 compact reader
 - U5 remains conditional on BT1 protection proof
 - Q1–Q8 active; Q9 DNP
 - LED10–LED13 exact DiCUNO parts; R6–R9 fixed at 150 Ω
