@@ -1,18 +1,30 @@
 # Drawings
 
-**RELEASE GATE: CLOSED**
+**FINAL RELEASE GATE: CLOSED**
 
-No final schematic/CAD drawing belongs here until `NETLIST.md`, `PINOUT.md`, `CONNECTIONS.md`, and `VALIDATION.md` are approved.
+A **pre-release engineering schematic** is now allowed because the electrical architecture, reference designators, netlist, GPIO assignment, 14-pixel lighting map, and per-component connection tables are sufficiently defined to draw the circuit accurately.
 
-Planned schematic sheets:
+This does **not** mean final assembly release is approved. Remaining bench/physical blockers in `VALIDATION.md` still control final release.
 
-1. power / wireless charging / battery
-2. MCU / wake / power gating
-3. SK6812 data level shifting and addressable lighting
-4. four pulse-phaser channels
-5. MFRC522 NFC interface
-6. connectors, test points, and harness interfaces
-7. later: physical harness/mechanical routing
-8. later: bench development-board layout
+## Current schematic set
 
-Every released drawing must show revision, source netlist revision, and reference designators matching the text files.
+The current engineering schematic is documented in `SCHEMATIC.md` and organized as four sheets:
+
+1. power, wireless charging, wake, battery path, Q1/Q2 and MT3608;
+2. U4 level shifting and the complete LED14-LED27 SK6812 RGBW chain;
+3. XIAO pin map, V602 NFC SPI interface, Q7/Q8 NFC power gating, Q9 DNP;
+4. four independent pulse-phaser channels Q3-Q6 / LED10-LED13.
+
+## Release rule
+
+The schematic remains **PRE-RELEASE** until the hardware-critical validation items that can affect drawing correctness are closed. Final schematic/CAD release must remain consistent with:
+
+- `POWER-ARCHITECTURE.md`
+- `DESIGNATORS.md`
+- `NETLIST.md`
+- `PINOUT.md`
+- `CONNECTIONS.md`
+- `LIGHTING-LAYOUT.md`
+- `VALIDATION.md`
+
+Physical dimensions are **not** required for the electrical schematic. They are required later for the harness/mechanical layout and final wire lengths.
