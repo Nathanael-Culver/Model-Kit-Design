@@ -1,22 +1,22 @@
 # USS Defiant — Test Plan
 
-**Document status:** **STEP 9 VALIDATION PLAN — ACTIVE / POLICY DECISIONS CLOSED**  
+**Document status:** **STEP 9 VALIDATION PLAN — ACTIVE / POLICY + U3 SELECTION CLOSED**  
 **Rule:** no schematic release until drawing blockers are closed; no hull closure until every pre-close test is PASS and recorded.
 
-## Approved policy baseline
+## Approved baseline
 
 - Q9 is **DNP**; NFC is allowed while wireless charging is active.
 - `WLC_PRESENT` on U1 D1/GPIO3 is the **normal v1 deep-sleep wake source**.
 - Wi-Fi/BLE/NFC are not deep-sleep wake sources; they become available after wireless-power wake.
+- **U3 is the black XFW-ETLIVE V602 compact 3.3 V SPI reader.** Green compact RC522 and large blue RC522 are spares only.
 
 ## Phase 0 — identify exact hardware before powered integration
 
-- Photograph BT1 lead/protection end; determine whether integral cell protection is present and verify discharge capability if documented.
+- Determine BT1 integral-protection status and verify discharge capability if documented.
 - Photograph RX1 front/back/coil; record pad labels and IC marking.
-- Photograph U2 MT3608 front/back; record pads/dimensions.
-- Photograph U3 MFRC522 front/back/header and onboard regulator/resistors.
-- Identify SK6812 form, direction, physical count, and local bypass capacitance.
-- Measure/identify one prewired 0805 LED polarity and built-in resistor status.
+- Record U2 dimensions if needed for layout; electrical pad labels are already verified.
+- Record U3 V602 dimensions/orientation in the intended hull location.
+- Determine SK6812 physical count/order.
 - Photograph/continuity-map SOT-23/SOT-23-5 carriers and protoboards.
 
 ## Phase 1 — battery/XIAO baseline
@@ -60,8 +60,6 @@ After RX1 voltage is proven safe:
 - verify Wi-Fi/BLE/NFC become available after wake;
 - ensure firmware does not create an immediate sleep/wake loop while `WLC_PRESENT` remains HIGH.
 
-There is intentionally no Wi-Fi/BLE/NFC deep-sleep wake test in v1.
-
 ## Phase 5 — lighting high-side gate / MT3608
 
 1. Build Q1/Q2/R3/R4 without load.
@@ -85,48 +83,51 @@ There is intentionally no Wi-Fi/BLE/NFC deep-sleep wake test in v1.
 6. Set `SK_DATA_RAW` LOW before enabling 5 V.
 7. Verify 3.3 V -> 5 V translation.
 8. Add R5=330 Ω and one SK6812 at conservative brightness.
-9. Verify local pixel bypass capacitance.
+9. Verify local pixel support components remain with the cut section.
 10. Check for startup glitches.
 
 ## Phase 7 — pulse phasers
 
-Using one actual prewired LED first:
+R6–R9 are already frozen at **150 Ω >=1/8 W**.
+
+Using one actual DiCUNO LED first:
 
 1. determine polarity electrically;
-2. determine whether inline resistance exists;
-3. measure Vf at safe test current;
-4. calculate R6–R9 or mark DNP;
-5. test one Q3-style channel;
-6. verify default OFF during reset/deep sleep;
-7. duplicate for Q4–Q6;
-8. test intended pulse sequences/no sleep glow.
+2. connect through 150 Ω from a controlled 5.0 V source;
+3. verify expected current is roughly 11–15 mA;
+4. test one Q3-style switch channel;
+5. verify default OFF during reset/deep sleep;
+6. duplicate for Q4–Q6;
+7. test intended pulse sequences/no sleep glow.
 
-## Phase 8 — MFRC522 power-off / boot test
+## Phase 8 — selected V602 power-off / boot test
 
-1. Verify exact U3 header and RST/NRSTPD circuitry.
-2. With U3 OFF and SPI connected, measure U3 VCC.
+1. Confirm printed V602 header order: `SDA, SCK, MOSI, MISO, IRQ, GND, RST, 3V3`.
+2. With U3 rail OFF and SPI connected, measure V602 `3V3` relative to GND.
 3. Compare deep-sleep current with Phase-1 baseline.
-4. Check whether D6/D8/D10 source current into unpowered U3.
-5. Verify R18 holds D0/GPIO2 safely high.
-6. Perform at least 50 cold boot/reset cycles with U3 attached/off.
+4. Check whether D6/D8/D10 source current into the unpowered V602.
+5. Verify R18 holds D0/GPIO2 safely high with V602 off.
+6. Perform at least 50 cold boot/reset cycles with V602 attached/off.
 7. Perform at least 50 deep-sleep -> WLC_PRESENT wake cycles.
-8. Stop and correct the specific interface if U3 back-powers or corrupts boot.
+8. Stop and correct the specific interface if V602 back-powers or corrupts boot.
 
-## Phase 9 — MFRC522 normal operation and charging coexistence
+## Phase 9 — V602 normal operation and charging coexistence
 
 After Phase 8 passes:
 
-- power U3 through Q7/Q8;
-- verify stable supply and switched-power reset;
+- power V602 through Q7/Q8;
+- verify stable 3.3 V supply;
+- verify switched-power reset and determine whether R17 is required;
 - read a known tag repeatedly;
+- record firmware/version-register response if available;
 - verify explicit SPI pins;
 - test intended hull read distance;
 - test with lighting operating.
 
 ### Required Q9-DNP coexistence test
 
-1. verify **no Q9/W013/W053 inhibit connection is fitted**;
-2. measure baseline NFC read distance/reliability with TX1 OFF;
+1. verify no Q9/W013/W053 inhibit connection is fitted;
+2. measure baseline V602 read distance/reliability with TX1 OFF;
 3. activate wireless charging at final-like coil alignment;
 4. repeat NFC reads at multiple tag positions/orientations;
 5. record any change in read distance, reliability, RX1/U3 temperature, or instability;
@@ -136,7 +137,7 @@ After Phase 8 passes:
 
 - assign LED14+ refs and remaining W-numbers;
 - verify physical emitters and P0–P8 mapping;
-- verify local decoupling;
+- verify complete manufacturer pixel sections remain intact;
 - measure chain current at controlled brightness;
 - set safe firmware brightness/current envelope;
 - validate C2 and 5 V stability;
@@ -152,7 +153,7 @@ Run at least:
 - deep sleep -> wireless wake;
 - repeated sleep/wake cycles;
 - all lighting/phaser modes;
-- NFC with charging OFF and ON;
+- V602 NFC with charging OFF and ON;
 - Wi-Fi/BLE control;
 - OTA;
 - repeated resets/power cycles;
@@ -167,7 +168,7 @@ Run at least:
 - verify no pinched wires;
 - verify high-current path margin;
 - verify charging through final hull;
-- verify NFC through hull with charging OFF and ON;
+- verify V602 read distance through hull with charging OFF and ON;
 - verify RF/Wi-Fi/BLE;
 - verify lighting after light-blocking/paint;
 - verify OTA again;
