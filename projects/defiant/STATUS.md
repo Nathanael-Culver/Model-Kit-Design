@@ -2,8 +2,8 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** **Step 9c — exact hull measurements / final harness geometry**  
-**Drawing gate:** **CLOSED**
+**Current phase:** **Step 10a — semantic EDA / KiCad first-open + ERC**  
+**Fabrication/closure gate:** **CLOSED**
 
 ## Workflow progress
 
@@ -20,10 +20,26 @@
 | 9. Static electrical validation | COMPLETE — CONDITIONAL PASS |
 | 9a. Architecture-policy decisions | COMPLETE / APPROVED |
 | 9b. Part/module physical identification | COMPLETE enough to proceed |
-| 9c. Physical placement / distribution | **CONCEPT FROZEN; exact coordinates/lengths OPEN** |
-| Bench development layout | **DEFINED** in `bench/BENCH-LAYOUT.md` |
-| Assembly sequence | **DEFINED** in `ASSEMBLY.md` |
-| 10+. Final drawings/layout/closure validation | gated |
+| 9c. Physical placement / distribution concept | CONCEPT FROZEN; exact coordinates/lengths deferred |
+| 10a. Machine-readable EDA source | **CREATED — XML/XSD + semantic validator** |
+| 10b. KiCad generation | **GENERATED structurally; native KiCad ERC still required** |
+| 10c. Harness-style renderer/database | NEXT after KiCad first-open/ERC |
+| Bench development layout | DEFINED in `bench/BENCH-LAYOUT.md` |
+| Assembly sequence | DEFINED in `ASSEMBLY.md` |
+
+## EDA workflow now in use
+
+Manual SVG/PDF schematics are no longer connectivity authority. The new flow is:
+
+1. electrical intent in the authoritative text/netlist documents;
+2. machine-readable connectivity in `eda/defiant-connectivity.xml`;
+3. schema/semantic validation using `eda/defiant-connectivity.xsd` and `eda/validate_connectivity.py`;
+4. deterministic schematic generation using `eda/generate_kicad.py`;
+5. open/save in KiCad and run native ERC;
+6. only after ERC, promote/export the readable schematic;
+7. extend the same semantic model into VeSys-style harness data and generated harness drawings.
+
+Current generated structure includes a KiCad project/root plus power, controller, lighting, phaser, and NFC child sheets. The generation environment does not contain KiCad, so **ERC has not yet been run** and no fabrication claim is being made.
 
 ## Confirmed hardware
 
@@ -54,50 +70,28 @@
 
 Data chain is frozen as LED14 -> ... -> LED27 using W054–W066. See `LIGHTING-LAYOUT.md`.
 
-## Frozen physical distribution concept
-
-See `POWER-DISTRIBUTION.md`.
-
-- one central power/control island;
-- U2 immediately adjacent;
-- RX1 coil on ventral/bottom charging surface;
-- U3 V602 on dorsal/top memory-crystal surface;
-- separate front / port / starboard +5 V and GND lighting branches;
-- 24 AWG preferred for main high-current runs, 26 AWG preferred for lighting trunks, 30 AWG for logic/data, subject to actual inventory/load validation;
-- copper tape optional only where it solves a real clearance problem and kept clear of RF/inductive antenna zones.
-
 ## Important validation result
 
-**There are no unresolved static electrical ERROR items.**
+**There are no unresolved static electrical ERROR items in the textual audit.**
 
-The remaining work is exact physical implementation and bench acceptance, not architecture redesign.
+That does not replace KiCad ERC or bench validation.
 
-## Remaining blockers before drawing release
+## Remaining blockers before fabrication/closure release
 
-1. prove BT1 protection status and discharge capability;
-2. measure exact component/LED locations and harness corridors in the actual hull;
-3. assign final W067+ +5V/GND/distribution segments and wire lengths;
-4. continuity-map SOT carriers;
-5. integrated XKT/D1 charging/recovery/load/thermal test;
-6. U2/Q1 load/thermal test;
-7. V602 reset/read-range/unpowered-backfeed/boot test;
-8. D0/D8/D9 repeated boot and sleep/wake validation;
-9. measure 14-pixel lighting load and freeze firmware current/brightness cap;
-10. test V602 while wireless charging is active;
+1. first-open/resave of generated KiCad project and native ERC review;
+2. prove BT1 protection status and discharge capability;
+3. continuity-map SOT carriers;
+4. integrated XKT/D1 charging/recovery/load/thermal test;
+5. U2/Q1 load/thermal test;
+6. V602 reset/read-range/unpowered-backfeed/boot test;
+7. D0/D8/D9 repeated boot and sleep/wake validation;
+8. measure 14-pixel lighting load and freeze firmware current/brightness cap;
+9. test V602 while wireless charging is active;
+10. later: measure exact component/LED positions and assign W067+ distribution segments/lengths;
 11. OTA/control/integrated thermal testing before hull closure.
 
-## What I need next for exact mechanical/harness freeze
+## Immediate next milestone
 
-One clear overhead photo of **each open hull half with a ruler in frame** is enough to continue without guessing. The photo should show the full interior, seam/glue lands, posts/ribs, and the intended charging surface.
+Open the generated KiCad project, allow KiCad to update/save the format if requested, and run ERC. Any parsing/ERC findings become the next concrete engineering work. Hull dimensions can wait until the electrical drawing pipeline is proven.
 
-From those images the next repo update will freeze:
-
-- component coordinates/orientations;
-- central control-board footprint;
-- LED14–LED27 mounting coordinates;
-- final power/ground branch points;
-- W067+ endpoints;
-- actual routed/cut wire lengths;
-- final assembly routing diagram inputs.
-
-`VALIDATION.md` remains authoritative for release blockers.
+`VALIDATION.md` remains authoritative for hardware release blockers.
