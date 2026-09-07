@@ -1,8 +1,8 @@
 # USS Defiant — Per-Component Pin / Connection Tables
 
-**Document status:** **FORMAL v1.1 — approved Step-9 decisions incorporated**  
+**Document status:** **FORMAL v1.2 — Step-9b physical evidence incorporated**  
 **Sources:** `POWER-ARCHITECTURE.md`, `DESIGNATORS.md`, `NETLIST.md`, `PINOUT.md`, `WIRE-LIST.md`.  
-**Rule:** every installed terminal resolves to a named net, `NC`, `DNP`, or a conditional branch. Generic-module physical pad/header order must still be verified before soldering.
+**Rule:** every installed terminal resolves to a named net, `NC`, `DNP`, or a conditional branch.
 
 ## 1. U1 — Seeed Studio XIAO ESP32-C3
 
@@ -14,7 +14,7 @@
 | 3V3 | — | `+3V3_ALWAYS` | W050; local R14/R18 feeds | FROZEN |
 | GND | — | `GND` | system ground | FROZEN |
 | D0 | GPIO2 | `NFC_MISO` | W046; R18 pull-up | FROZEN |
-| D1 | GPIO3 | `WLC_PRESENT` | W012 | FROZEN; **normal deep-sleep wake** |
+| D1 | GPIO3 | `WLC_PRESENT` | W012 | FROZEN; normal deep-sleep wake |
 | D2 | GPIO4 | `PH0_GATE` | W028 | FROZEN |
 | D3 | GPIO5 | `PH1_GATE` | W029 | FROZEN |
 | D4 | GPIO6 | `PH2_GATE` | W030 | FROZEN |
@@ -26,8 +26,6 @@
 | D10 | GPIO10 | `NFC_MOSI` | W045 | FROZEN |
 | RESET/EN | — | service only | none | NC final harness |
 | BOOT switch | GPIO9 onboard | onboard | none | do not obstruct |
-
-Approved wake policy: Wi-Fi/BLE/NFC do not wake deep sleep; applying wireless charging creates `WLC_PRESENT` and wakes U1.
 
 ## 2. BT1 — 103450 LiPo
 
@@ -44,6 +42,8 @@ If unprotected:
 |---|---|---|---|
 | + | `CELL+` | U5 B+ | W003 |
 | - | `CELL-` | U5 B- | W004 |
+
+Current photograph is consistent with an end-mounted protection board but does not prove protection function; branch remains conditional.
 
 ## 3. U5 — optional 1S protection
 
@@ -73,8 +73,6 @@ External to ship. Verify exact DC input polarity/rating and coil terminals on ph
 | 1 | cathode / marked bar | `SYS_5V_IN` | U1 5V | W010 |
 | 2 | anode | `WLC_5V_RAW` | RX1 positive | W008 |
 
-Direction: RX1 -> anode -> cathode/bar -> U1 5V.
-
 ## 7. R1/R2 — WLC_PRESENT divider
 
 | Part | Terminal | Connection |
@@ -84,7 +82,7 @@ Direction: RX1 -> anode -> cathode/bar -> U1 5V.
 | R2 180 kΩ | high | `WLC_PRESENT`; W012 to U1 D1 |
 | R2 | low | `GND` |
 
-**No Q9 branch exists. W013 is DNP.**
+W013 is DNP; no Q9 branch exists.
 
 ## 8. Q1/Q2 — lighting high-side gate
 
@@ -94,7 +92,7 @@ Direction: RX1 -> anode -> cathode/bar -> U1 5V.
 |---:|---|---|---|---|
 | 1 | Gate | `LIGHT_GATE` | Q2 drain; R3 -> BAT+ | W019 if separate |
 | 2 | Source | `BAT+` | battery node | W007 |
-| 3 | Drain | `U2_VIN_SW` | U2 IN+ | W014 |
+| 3 | Drain | `U2_VIN_SW` | U2 VIN+ | W014 |
 
 ### Q2 AO3400A
 
@@ -106,15 +104,18 @@ Direction: RX1 -> anode -> cathode/bar -> U1 5V.
 
 R3 = 100 kΩ LIGHT_GATE -> BAT+. R4 = 100 kΩ PERIPH_EN -> GND.
 
-## 9. U2 — MT3608 module
+## 9. U2 — photographed MT3608 module
 
-| Pad | Net | Connection | Wire |
-|---|---|---|---|
-| IN+ | `U2_VIN_SW` | Q1 drain | W014 |
-| IN- | `GND` | system GND | W015 |
-| OUT+ | `+5V_LIGHT_SW` | 5 V distribution | W016 |
-| OUT- | `GND` | system GND | W017 |
-| EN if accessible | board-normal enabled state | not MCU-controlled | none |
+Actual board pad markings are visible and now authoritative:
+
+| Physical pad label | Net | Connection | Wire | Status |
+|---|---|---|---|---|
+| `VIN+` | `U2_VIN_SW` | Q1 drain | W014 | VERIFIED label |
+| `VIN-` | `GND` | system GND | W015 | VERIFIED label |
+| `VOUT+` | `+5V_LIGHT_SW` | 5 V distribution | W016 | VERIFIED label |
+| `VOUT-` | `GND` | system GND | W017 | VERIFIED label |
+
+No separate external EN pad is visible. Do not modify the bare IC for normal assembly.
 
 ## 10. U4 — SN74AHCT1G125DBVR
 
@@ -139,6 +140,8 @@ Target 470 µF, >=6.3 V; revalidate after physical LED load is known.
 
 ## 12. Physical SK6812 emitters LED14+
 
+Exact stock is BTF-LIGHTING 5 V SK6812 RGBW Natural White, 144 LED/m, black IP30 strip.
+
 LED14:
 
 | Pad | Net | Connection |
@@ -148,7 +151,7 @@ LED14:
 | DIN | `SK_DIN_FIRST` | W023 from R5 |
 | DOUT | next serial data net | LED15 DIN if present |
 
-Subsequent emitters: VDD to +5V, GND to GND, DIN from previous DOUT, DOUT to next DIN; final DOUT NC unless test point later assigned.
+For every cut section, retain the complete manufacturer-defined pixel segment and its local SMD support components.
 
 ## 13. Q3–Q6 — phaser switches
 
@@ -159,16 +162,18 @@ Subsequent emitters: VDD to +5V, GND to GND, DIN from previous DOUT, DOUT to nex
 | Q5 | W030 `PH2_GATE` | W040 GND | W039 LED12 cathode | R12 100 kΩ |
 | Q6 | W031 `PH3_GATE` | W043 GND | W042 LED13 cathode | R13 100 kΩ |
 
-## 14. LED10–LED13 phasers
+## 14. LED10–LED13 — DiCUNO white 0805 phasers
 
-| LED | Anode | Cathode | Status |
+Exact listed LED parameters: white, 2.8–3.3 V, 20 mA, 240–280 mcd, 120°, prewired 6.3 in leads.
+
+| LED | Anode | Cathode | Current resistor |
 |---|---|---|---|
-| LED10 | R6/W032 | Q3/W033 | R6 TBD/DNP |
-| LED11 | R7/W035 | Q4/W036 | R7 TBD/DNP |
-| LED12 | R8/W038 | Q5/W039 | R8 TBD/DNP |
-| LED13 | R9/W041 | Q6/W042 | R9 TBD/DNP |
+| LED10 | R6/W032 | Q3/W033 | **R6 = 150 Ω, >=1/8 W** |
+| LED11 | R7/W035 | Q4/W036 | **R7 = 150 Ω, >=1/8 W** |
+| LED12 | R8/W038 | Q5/W039 | **R8 = 150 Ω, >=1/8 W** |
+| LED13 | R9/W041 | Q6/W042 | **R9 = 150 Ω, >=1/8 W** |
 
-Do not infer polarity from wire color until physically verified.
+At 5.0 V, 150 Ω produces approximately 11.3–14.7 mA across the listed Vf range. Verify one physical LED's polarity before duplicating all channels; do not infer polarity solely from wire color.
 
 ## 15. Q7/Q8 — NFC power gate; Q9 DNP
 
@@ -190,56 +195,77 @@ Do not infer polarity from wire color until physically verified.
 
 R14 = 100 kΩ NFC_GATE -> +3V3_ALWAYS. R15 = 10 kΩ PERIPH_EN -> NFC_EN_GATE. R16 = 100 kΩ NFC_EN_GATE -> GND.
 
-### Q9 AO3400A
+Q9 pins 1/2/3: DNP / no connection. W013 and W053: DNP.
 
-| Pin | Connection |
-|---:|---|
-| 1 Gate | **DNP / no connection** |
-| 2 Source | **DNP / no connection** |
-| 3 Drain | **DNP / no connection** |
+## 16. U3 — compact RC522-class reader candidates
 
-Q9 is permanently DNP by approved Step-9 decision. W013 and W053 are DNP. NFC power truth condition is now **NFC_POWER = PERIPH_EN**. NFC is allowed while charging.
+### Black XFW-ETLIVE V602 — primary candidate
 
-## 16. U3 — MFRC522 breakout
+Photographed header order, top-to-bottom as printed:
 
-| Header function | Net | Connection | Wire | Status |
-|---|---|---|---|---|
-| 3.3V/VCC | `+3V3_NFC_SW` | Q7 drain | W048 | FROZEN function |
-| GND | `GND` | system GND | W049 | FROZEN |
-| SCK | `NFC_SCK` | U1 D8 | W044 | FROZEN |
-| MOSI | `NFC_MOSI` | U1 D10 | W045 | FROZEN |
-| MISO | `NFC_MISO` | U1 D0 | W046 | FROZEN |
-| SDA/SS/CS | `NFC_CS` | U1 D6 | W047 | FROZEN function |
-| RST/NRSTPD | reset bias | R17 -> +3V3_NFC_SW unless DNP | local | board behavior OPEN |
-| IRQ | NC | none | none | NC |
+| Printed pin | Net / project use | Wire |
+|---|---|---|
+| SDA | `NFC_CS` -> U1 D6 | W047 |
+| SCK | `NFC_SCK` -> U1 D8 | W044 |
+| MOSI | `NFC_MOSI` -> U1 D10 | W045 |
+| MISO | `NFC_MISO` -> U1 D0 | W046 |
+| IRQ | NC | none |
+| GND | `GND` | W049 |
+| RST | reset bias via R17 | local |
+| 3V3 | `+3V3_NFC_SW` | W048 |
 
-R17 target = 10 kΩ unless onboard bias makes it unnecessary.
+### Green RC522 MINI V1.1-style — viable alternate
 
-## 17. R18 — GPIO2 boot pull-up
+Photographed header order:
 
-10 kΩ from U1 D0/GPIO2 `NFC_MISO` to `+3V3_ALWAYS`.
+| Printed pin | Net / project use | Wire |
+|---|---|---|
+| NSS | `NFC_CS` -> U1 D6 | W047 |
+| SCK | `NFC_SCK` -> U1 D8 | W044 |
+| MOSI | `NFC_MOSI` -> U1 D10 | W045 |
+| MISO | `NFC_MISO` -> U1 D0 | W046 |
+| RST | reset bias via R17 | local |
+| GND | `GND` | W049 |
+| 3.3V | `+3V3_NFC_SW` | W048 |
 
-## 18. Unused / superseded
+No IRQ is exposed on the green board; that is acceptable because IRQ is not used.
 
-- Q9: **DNP**.
-- W013/W053: **DNP / never reuse**.
-- U3 IRQ: NC.
+### Selection rule
+
+Use the compact board that passes all of these better in the actual hull:
+
+1. read distance through plastic;
+2. reset after power cycling;
+3. no unpowered-SPI backfeed;
+4. no strap-pin boot interference;
+5. charging/NFC coexistence;
+6. physical fit/orientation.
+
+The large blue standard RC522 is not the preferred Defiant board.
+
+R17 target = 10 kΩ unless selected board's onboard reset bias makes it DNP. R18 = 10 kΩ from U1 D0/GPIO2 `NFC_MISO` to `+3V3_ALWAYS`.
+
+## 17. Unused / superseded
+
+- Q9: DNP.
+- W013/W053: DNP / never reuse.
+- U3 IRQ: NC if present.
 - U1 external RESET/BOOT wiring: NC final harness.
 - LED1–LED9: superseded placeholders.
 - reed switches/NTCs: not installed.
 - MT3608 EN: not MCU sleep control.
 
-## 19. Physical verification still required
+## 18. Physical verification still required
 
-1. RX1 output/coil pad labels.
-2. U2 IN/OUT orientation.
-3. U3 exact header order/reset circuitry.
-4. U5 labels only if fitted.
-5. SK6812 pad direction/count/order.
-6. LED10–LED13 polarity/resistor status.
+1. RX1 output/coil pad labels and measured output.
+2. BT1 protection proof.
+3. choose black vs green compact U3 after bench tests.
+4. selected U3 reset/backfeed behavior.
+5. SK6812 physical count/order.
+6. one-sample phaser polarity confirmation.
 7. SOT carrier pad numbering/orientation.
-8. U3 unpowered-I/O/backfeed behavior.
+8. load/thermal tests for U2/Q1/D1/battery.
 
-## 20. Conclusion
+## 19. Conclusion
 
-Every fitted component has an authoritative terminal destination. Q9 is explicitly DNP and no stale charging-to-NFC inhibit connection remains in this table.
+The actual MT3608 pad labels are now verified, R6–R9 are fixed at 150 Ω, and both compact RC522 boards have exact visible header mappings that fit the existing frozen GPIO architecture.
