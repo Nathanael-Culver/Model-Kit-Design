@@ -1,27 +1,82 @@
 # USS Defiant KiCad Project
 
-This directory is generated from `../eda/defiant-connectivity.xml`.
+The KiCad schematic is **generated from semantic connectivity data**, not hand-drawn as the source of truth.
 
-## Files
+Primary source:
 
-- `USS-Defiant.kicad_pro` — KiCad project.
-- `USS-Defiant.kicad_sch` — root schematic.
-- `power.kicad_sch` — battery, wireless charging, divider, Q1/Q2 and MT3608.
-- `controller.kicad_sch` — XIAO ESP32-C3 pin/net assignment.
-- `lighting.kicad_sch` — U4 level shifter, C1/C2, R5 and LED14–LED27.
-- `phasers.kicad_sch` — four conventional phaser LED/MOSFET channels.
-- `nfc.kicad_sch` — V602 SPI and Q7/Q8 switched 3.3 V rail.
+- `../eda/defiant-connectivity.xml`
 
-## Important
+Generator / validation:
 
-The project was generated without a KiCad binary available in the execution environment. The files are structurally checked and the XML connectivity is semantically validated, but **KiCad ERC has not yet been run**. Open the project in KiCad, allow KiCad to update/save the file format if prompted, then run ERC before using it for fabrication.
+- `../eda/validate_connectivity.py`
+- `../eda/generate_kicad.py`
+- `../eda/defiant-connectivity.xsd`
 
-The design deliberately uses embedded custom block symbols and named nets. This makes the connectivity deterministic and avoids the line-routing ambiguity that affected earlier hand-rendered drawings. Once opened in KiCad, the symbols can be rearranged or replaced with prettier standard/custom symbols without changing the net names.
+## Repository state
 
-## Source-of-truth workflow
+The repository keeps the machine-readable source, generator, project file, and hierarchical root schematic under version control.
 
-1. Change/audit electrical intent in `../eda/defiant-connectivity.xml`.
-2. Run `../eda/validate_connectivity.py`.
-3. Regenerate KiCad with `../eda/generate_kicad.py`.
-4. Open KiCad and run ERC.
-5. Only then update PDF/harness drawings.
+Run this from `projects/defiant/` to generate or refresh the complete KiCad hierarchy:
+
+```bash
+python eda/validate_connectivity.py
+python eda/generate_kicad.py
+```
+
+That generates/refreshes:
+
+- `kicad/USS-Defiant.kicad_pro`
+- `kicad/USS-Defiant.kicad_sch`
+- `kicad/power.kicad_sch`
+- `kicad/controller.kicad_sch`
+- `kicad/lighting.kicad_sch`
+- `kicad/phasers.kicad_sch`
+- `kicad/nfc.kicad_sch`
+
+A complete generated package is also being provided in the engineering chat so it can be opened immediately without running the generator first.
+
+## First KiCad-open procedure
+
+1. Open `kicad/USS-Defiant.kicad_pro` in a current KiCad release.
+2. If KiCad offers to update/resave the generated schematic format, allow it.
+3. Inspect all five child sheets.
+4. Run **Electrical Rules Checker (ERC)**.
+5. Save/export the ERC report or capture the remaining errors/warnings.
+6. Do **not** use the project for fabrication until meaningful ERC findings are resolved or explicitly documented.
+
+## Current validation state
+
+The generator output has been checked for:
+
+- XML/XSD validity;
+- duplicate component/pin definitions;
+- active pins lacking a net;
+- required critical-net semantics;
+- JSON parseability of the `.kicad_pro` file;
+- balanced S-expressions/quotes in generated `.kicad_sch` files.
+
+**Native KiCad ERC has not been run in the generation environment because KiCad is not installed there.**
+
+## Why this workflow exists
+
+The earlier manually rendered SVG/PDF schematic attempts mixed two separate jobs:
+
+1. deciding electrical connectivity;
+2. arranging a readable drawing.
+
+That made it possible for the picture to accidentally imply connections that were not intended.
+
+This workflow separates them. Component pins, nets, wire IDs, DNP/NC state, and functional grouping are stored as data first. KiCad is then a renderer/editor/ERC engine for that data.
+
+The same XML source can later be extended into a VeSys-style harness database with connector cavities, splices, wire gauge/color/length, bundles, branches, termination information, and physical harness coordinates. Harness SVG/PDF tables can then be generated from the same electrical source instead of redrawn independently.
+
+## Generation philosophy
+
+The first generated symbols are deliberately simple embedded block symbols. Connectivity correctness comes before cosmetic symbol quality.
+
+Once the first KiCad open/ERC cycle succeeds, the next refinement is to:
+
+- replace selected blocks with polished custom symbols where useful;
+- make generated UUIDs deterministic so Git diffs remain clean;
+- add stronger automated cross-checks against `WIRE-LIST.md` and `DESIGNATORS.md`;
+- generate the physical harness drawing from the same XML model.
