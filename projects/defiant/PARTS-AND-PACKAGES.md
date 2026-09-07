@@ -1,109 +1,150 @@
 # USS Defiant — Part Identification, Packages, and Carrier Requirements
 
-**Document status:** STEP 2 COMPLETE WHERE EVIDENCE EXISTS / MODULE-LEVEL PHYSICAL VERIFICATION STILL OPEN
+**Document status:** STEP 9b PHYSICAL EVIDENCE UPDATE — MAJOR MODULE IDENTIFICATION NOW CLOSED EXCEPT RX1/TX1 AND BATTERY PROTECTION
 
 This document answers: what exact part is it, what physical package/form is it, and what does it need in order to be mounted/wired in the Defiant.
 
 ## 1. Parts with exact identity/package established
 
-| Ref/class | Exact part | Physical package / size | Mounting / carrier requirement | Step-2 status |
+| Ref/class | Exact part | Physical package / size | Mounting / carrier requirement | Status |
 |---|---|---|---|---|
-| U1 | Seeed Studio XIAO ESP32-C3 | XIAO module, 21 x 17.8 mm; single-sided component layout; castellated/through-hole edge pads plus battery pads | **No carrier required.** Final model should use direct soldered wires/pads rather than tall header pins unless bench use requires headers. Mechanically secure the module separately and preserve antenna clearance. | **VERIFIED** |
-| BT1 | 103450 Li-Polymer, 3.7 V nominal, 2500 mAh, 9.25 Wh | pouch cell, 10 x 34 x 50 mm; supplied manual shows PH2.0-style two-wire connector/lead | **No carrier.** Requires padded/nonconductive restraint; do not clamp or puncture pouch. Final electrical termination may be direct lead/connector depending hull layout. Protection-PCB status remains OPEN. | **VERIFIED electrical/size; protection OPEN** |
-| U4 class | Texas Instruments `SN74AHCT1G125DBVR` | DBV, SOT-23-5, approx. 2.9 x 2.8 mm body | **Carrier/adapter required for hand-wired build.** Use purchased SOT-23-5 breakout/carrier or an equivalent PCB footprint. Add local bypass capacitor on the same carrier/board. | **VERIFIED** |
-| Q class | Alpha & Omega `AO3400A` | SOT-23-3, approx. 2.9 x 2.8 mm body | **Carrier/adapter required for hand wiring.** Use purchased SOT-23-3 breakout/carrier or dedicated PCB footprint. | **VERIFIED** |
-| Q class | Alpha & Omega `AO3401A` | SOT-23-3, approx. 2.9 x 2.8 mm body | **Carrier/adapter required for hand wiring.** Use purchased SOT-23-3 breakout/carrier or dedicated PCB footprint. | **VERIFIED** |
-| D class | Nexperia `PMEG2010ER,115` | CFP3 / SOD123W, two-terminal SMD, approx. 2.6 x 1.7 x 1.0 mm | **Not compatible with SOT-23 carriers.** Mount on a small SOD123/SOD123W pad area, custom PCB, or carefully prepared solderable proto-board pads. Dedicated breakout optional, not inherently required. | **VERIFIED** |
-| SW spare | Littelfuse `MDSR-10-15-20` | axial glass reed switch; MDSR-10 family has approx. 10.2 mm glass body | **No carrier required.** Through-hole/lead mounting with strain relief if ever used. Not assigned to current Defiant architecture. | **VERIFIED purchase / spare** |
-| TH spare | Murata `NCU18XH103F60RB` | 0603 / 1608 metric SMD NTC, 10 kΩ | **Carrier or PCB footprint required if used.** Too small for direct standard perfboard-hole mounting without adapter/pads. Not assigned to current Defiant architecture. | **VERIFIED purchase / spare** |
+| U1 | Seeed Studio XIAO ESP32-C3 | XIAO module, 21 x 17.8 mm | no carrier required; preserve antenna clearance | **VERIFIED** |
+| BT1 | 103450 Li-Polymer, 3.7 V, 2500 mAh, 9.25 Wh | pouch cell, nominal 10 x 34 x 50 mm | padded/nonconductive restraint; do not clamp/puncture | **VERIFIED identity/electrical/size; protection still OPEN** |
+| U2 | adjustable MT3608 boost-converter module, exact current board photographed | complete small module with trimmer and pads visibly labeled `VIN+`, `VIN-`, `VOUT+`, `VOUT-`; no external EN pad visible | no semiconductor carrier; mount complete module with insulated mechanical restraint | **PHYSICAL BOARD VERIFIED; exact measured dimensions still record later** |
+| U4 | TI `SN74AHCT1G125DBVR` | DBV / SOT-23-5 | purchased SOT-23-5 carrier required for hand-wired build; C1 local | **VERIFIED** |
+| Q class | AOS `AO3400A` | SOT-23-3 | purchased SOT-23-3 carrier / PCB footprint | **VERIFIED** |
+| Q class | AOS `AO3401A` | SOT-23-3 | purchased SOT-23-3 carrier / PCB footprint | **VERIFIED** |
+| D1 class | Nexperia `PMEG2010ER,115` | CFP3 / SOD123W | not compatible with SOT carrier; custom/protoboard pads | **VERIFIED** |
 
-## 2. Reconstructed purchased module/form details that still need physical confirmation
+## 2. NFC reader hardware on hand
 
-| Part | Best reconstructed identification | Package/form | Mounting requirement | Remaining verification |
-|---|---|---|---|---|
-| U2 MT3608 | HiLetgo-style adjustable MT3608 boost module previously linked in project history | reconstructed module approximately **36 x 17 x 14 mm**; screw-adjust trimmer; generic module rather than bare MT3608 IC | **No semiconductor carrier.** Mount the complete module to hull/protoboard with insulated mechanical restraint. Do not rely on the module's solder joints as structural support. | Photograph exact purchased board front/back; record actual dimensions and whether MT3608 EN is accessible or tied on-board. |
-| U3 MFRC522 | MFRC522 13.56 MHz SPI breakout module | complete reader PCB with printed loop antenna; exact board revision/size/header order not yet established | **No carrier.** Mount complete module flat, with antenna face/orientation controlled and kept clear of nearby metal/copper/battery as testing requires. | Photograph front/back and header labels; measure board/antenna dimensions. |
-| TX1 XKT-412 | XKT-412 wireless-power transmitter | complete transmitter PCB + external coil | **No carrier.** External base assembly; coil mechanically fixed and centered relative to RX1. | Photograph exact board/coil and record dimensions/pad/connector labels. |
-| RX1 XKT receiver | high-current matching receiver sold as 5 V / 2 A; receiver IC marking appears `XKT-3168` | complete receiver PCB + coil | **No carrier.** Module/coil assembly mechanically fixed inside hull; coil must remain flat and aligned to final charging surface. | Photograph front/back/coil, confirm IC marking, pad polarity, actual board/coil dimensions, and loaded output. |
+Three RC522-class boards were physically shown on 2026-09-06.
 
-## 3. Lighting parts
+### Large blue standard RFID-RC522
 
-### SK6812 RGBW
+- standard full-size blue PCB with large printed antenna;
+- electrically usable, but mechanically poor for this model;
+- **not selected for Defiant installation** unless both compact boards unexpectedly fail testing.
 
-Project history previously linked a **BTF-LIGHTING 5 V SK6812 RGBW strip using 5050-package LEDs, 144 LEDs/m, black IP30 PCB**. This is useful reconstruction evidence but has not yet been independently re-confirmed against the exact material currently on the bench.
+### Compact black XFW-ETLIVE V602
 
-| Property | Current Step-2 status |
+Visible header order from the photographed board:
+
+1. SDA / SS / CS
+2. SCK
+3. MOSI
+4. MISO
+5. IRQ
+6. GND
+7. RST
+8. 3V3
+
+Current external documentation for this board family gives approximately **36 x 25 x 4 mm**, 3.3 V, SPI, integrated PCB antenna. The photographed IC marking appears consistent with an FM17522/RC522-compatible device; common MFRC522 libraries support FM17522-class readers, but firmware version/readback must be recorded during bench validation.
+
+**Status:** **PRIMARY U3 CANDIDATE.** It fits the frozen SPI architecture exactly; IRQ remains NC.
+
+### Compact green RC522 MINI V1.1-style board
+
+Visible header order:
+
+1. NSS
+2. SCK
+3. MOSI
+4. MISO
+5. RST
+6. GND
+7. 3.3V
+
+This is also a compact 3.3 V SPI RC522-class reader and does not expose IRQ, which is acceptable because the Defiant does not use IRQ.
+
+**Status:** **VIABLE U3 ALTERNATE.** Bench compare with the black V602 for fit, read range, reset behavior, and unpowered-SPI/backfeed. Because both are about the same footprint class, use whichever performs better in the actual hull; the large blue module remains the fallback only.
+
+## 3. Wireless-power modules still needing exact physical verification
+
+| Part | Current identification | Remaining verification |
+|---|---|---|
+| TX1 | XKT-412 transmitter + coil | front/back photo, connector/pad labels, dimensions |
+| RX1 | matching receiver sold as 5 V / 2 A; apparent XKT-3168 | front/back/coil, exact output pads/polarity, unloaded/loaded voltage/current/temperature |
+
+## 4. Addressable lighting — exact stock confirmed
+
+Exact current stock from user-supplied product screenshot:
+
+- **BTF-LIGHTING SK6812 RGBW Natural White**
+- DC 5 V
+- 144 LEDs/m
+- 3.28 ft / 1 m
+- IP30
+- black PCB
+- individually addressable RGBW
+- 5050-class package on flexible strip
+
+The product image shows each cuttable pixel section carrying local SMD support components consistent with the normal strip decoupling/matching network. During actual cutting, retain the complete manufacturer-defined pixel section and its local components.
+
+| Property | Status |
 |---|---|
-| LED technology | SK6812 RGBW — LOCKED |
-| Supply | 5 V — LOCKED architecture |
-| Reconstructed package | **5050 / 5.0 x 5.0 mm** SK6812 RGBW on flexible strip — RECONSTRUCTED |
-| Reconstructed strip | BTF-LIGHTING, 144 LEDs/m, black IP30, 1 m — RECONSTRUCTED historical purchase/link |
-| Physical emitter count in Defiant | **OPEN**; do not confuse 9 logical zones with 9 physical LEDs |
-| Data topology | one addressable serial bus is the current architecture goal; exact physical emitter order/count to be frozen from hull layout |
-| Carrier | **No separate carrier** if LEDs are cut from flexible strip. Cut individual/small strip sections at manufacturer cut points and provide strain relief to fine wires. |
+| Technology / color | SK6812 RGBW Natural White — **VERIFIED** |
+| Supply | 5 V — **VERIFIED** |
+| Form | 144 LED/m flexible strip, black IP30 — **VERIFIED** |
+| Local support components | visible per section — **VERIFIED FORM; continuity/decoupling retained during cutting required** |
+| Physical emitter count in Defiant | **OPEN** |
+| Data topology | one serial bus — **FROZEN** |
 
-### Pulse-phaser LEDs
+Do not infer physical count from P0–P8.
 
-Project history previously linked **DiCUNO prewired white 0805 LEDs** with reconstructed specifications: 0805 / 2.0 x 1.25 mm LED, approximately 16 cm leads, up to 20 mA, approximately 240–280 mcd, 20° viewing angle.
+## 5. Pulse-phaser LEDs — exact stock confirmed
 
-| Property | Current Step-2 status |
-|---|---|
-| Quantity | 4 — LOCKED |
-| Package | 0805 / 2012 metric — RECONSTRUCTED |
-| Form | prewired LED with fine leads — RECONSTRUCTED |
-| Series resistor in leads | **OPEN**; do not assume one exists |
-| Carrier | **None.** Mount LED directly at emitter/fiber location with insulated/strain-relieved leads. |
+Exact product shown:
 
-## 4. Purchased carrier boards
+- DiCUNO pre-wired SMD 0805 white LEDs
+- 6.3 in / approximately 16 cm leads
+- white: 7000–12000 K
+- 240–280 mcd
+- 2.8–3.3 V forward-voltage specification
+- 20 mA listed current
+- 120° beam angle
+
+The listing shows direct wires soldered to the 0805 LED and specifies LED forward voltage/current rather than a 5 V/12 V pre-resistor input rating. No series resistor is shown or specified.
+
+### Frozen starting current limit
+
+For the Defiant's regulated 5.0 V lighting rail, use:
+
+- **R6 = R7 = R8 = R9 = 150 Ω**
+- minimum power rating: **1/8 W** (0.125 W) or greater
+
+At 5.0 V and LED Vf of 2.8–3.3 V, 150 Ω gives approximately **11.3–14.7 mA**, safely below the listed 20 mA while remaining bright for a pulse-phaser effect. This also reduces peak load and heat versus driving the LED at the absolute listed 20 mA.
+
+Before installing all four, verify one physical LED's polarity and diode behavior with a current-limited bench test; this is verification, not a reason to leave R6–R9 unspecified.
+
+## 6. Battery protection status
+
+The new BT1 photograph confirms the exact label and shows a stiff/dark structure under the taped lead end that is **consistent with** an end-mounted protection PCB. However, the photograph does not expose enough circuitry to prove the function.
+
+Therefore:
+
+- identity/capacity are VERIFIED;
+- integral protection is **PROBABLE but not yet VERIFIED**;
+- do **not** peel or cut the pouch/tape solely to inspect it;
+- close this item using a better edge-on lead-end photograph, original seller specification, or other safe evidence.
+
+U5 remains conditional until this is closed.
+
+## 7. Purchased carrier boards
 
 | Carrier type | Intended devices | Status |
 |---|---|---|
-| SOT-23-3 breakout/carrier | AO3400A, AO3401A | purchased; exact board dimensions/pin-label orientation need physical confirmation |
-| SOT-23-5 breakout/carrier | SN74AHCT1G125DBVR | purchased; exact board dimensions/pin-label orientation need physical confirmation |
-| solderable prototyping board | interconnect, passives, possibly SOD123W diode and carrier interconnection | purchased; exact hole pitch/board dimensions still to inventory |
+| SOT-23-3 breakout/carrier | AO3400A, AO3401A | purchased; pad numbering/orientation still continuity-check before soldering |
+| SOT-23-5 breakout/carrier | SN74AHCT1G125DBVR | purchased; pad numbering/orientation still continuity-check |
+| solderable prototyping board | passives/distribution/SOD123W integration | purchased; exact physical distribution layout still OPEN |
 
-### Carrier rule
+## 8. Step-9b conclusion
 
-Before any SOT device is soldered, verify the carrier's pad numbering against the **actual semiconductor datasheet pin numbers**. Do not trust silkscreen labels such as `G/S/D` or generic `1/2/3` until continuity/orientation is checked. This prevents mirrored SOT-23 carrier layouts from silently reversing source/drain or logic pins.
+Physical evidence now closes several former unknowns:
 
-## 5. Parts that do not currently need a dedicated carrier
+- U2 exact board form and functional pad labels are confirmed; no exposed EN pad is visible, reinforcing the frozen external Q1/Q2 input-disconnect architecture.
+- Exact SK6812 strip product is confirmed.
+- Exact pulse-phaser LED product/spec is confirmed and R6–R9 can be fixed at 150 Ω.
+- Both compact RC522-class boards are suitable candidates; black XFW-ETLIVE V602 is the primary candidate, green RC522 MINI V1.1 the alternate, and the large blue reader is not preferred.
 
-- XIAO ESP32-C3 module
-- battery
-- XKT transmitter module
-- XKT receiver module
-- MT3608 boost module
-- MFRC522 module
-- SK6812 flexible-strip sections
-- prewired 0805 LEDs
-- axial reed switches
-
-These still require **mechanical mounting/strain relief**, which is handled later in `MECHANICAL-LAYOUT.md`; "no carrier" does not mean "leave loose in the hull."
-
-## 6. Exact package facts that affect the later schematic/assembly
-
-- `SN74AHCT1G125DBVR`: DBV/SOT-23-5; one level-shifter IC per independent SK6812 data line.
-- `AO3400A`: SOT-23-3 N-channel MOSFET.
-- `AO3401A`: SOT-23-3 P-channel MOSFET.
-- `PMEG2010ER,115`: CFP3/SOD123W, **not** SOT-23.
-- `NCU18XH103F60RB`: 0603/1608 metric.
-- `MDSR-10-15-20`: axial glass through-hole device.
-- XIAO: self-contained module; do not create an unnecessary carrier board unless the final mechanical layout specifically benefits from one.
-
-## 7. Step-2 unresolved items
-
-The exact IC-level parts are identified. The remaining unknowns are **physical module variants**, not conceptual architecture gaps:
-
-1. exact MT3608 breakout revision/dimensions/EN accessibility;
-2. exact MFRC522 breakout revision and header order;
-3. exact XKT receiver/transmitter board and coil dimensions/pad labels;
-4. exact currently-owned SK6812 strip/package confirmation and physical emitter count;
-5. exact prewired 0805 LED lead/resistor configuration;
-6. exact carrier-board layouts/dimensions;
-7. exact protoboard dimensions.
-
-These items are deliberately marked OPEN rather than guessed. They can be closed from photographs and measurements before physical layout and final pin-by-pin assembly documentation.
-
-## 8. Step-2 conclusion
-
-**No package/mounting discovery forces a component substitution.** The parts already purchased remain compatible with a hand-wired/carrier-board Defiant build. The tiny SMD parts are manageable specifically because the appropriate SOT carriers were purchased. The only unusual package is the PMEG2010ER SOD123W diode, which must not be placed on a SOT carrier.
+Still open before final drawings: battery protection proof, RX1/TX1 identification/measurement, final compact-U3 bench selection, physical SK6812 emitter count/order, load/backfeed/boot/thermal tests, carrier orientation, and final distribution layout.
