@@ -1,179 +1,178 @@
 # USS Defiant — Test Plan
 
-**Document status:** **STEP 9 VALIDATION PLAN — ACTIVE / POLICY + U3 SELECTION CLOSED**  
-**Rule:** no schematic release until drawing blockers are closed; no hull closure until every pre-close test is PASS and recorded.
+**Document status:** **ACTIVE — architecture, U3 selection, wireless module IDs, and 14-pixel lighting layout frozen**  
+**Rule:** no hull closure until every pre-close test is PASS and recorded.
 
 ## Approved baseline
 
-- Q9 is **DNP**; NFC is allowed while wireless charging is active.
-- `WLC_PRESENT` on U1 D1/GPIO3 is the **normal v1 deep-sleep wake source**.
-- Wi-Fi/BLE/NFC are not deep-sleep wake sources; they become available after wireless-power wake.
-- **U3 is the black XFW-ETLIVE V602 compact 3.3 V SPI reader.** Green compact RC522 and large blue RC522 are spares only.
+- Q9 is DNP; NFC is allowed while wireless charging is active.
+- `WLC_PRESENT` on U1 D1/GPIO3 is the normal v1 deep-sleep wake source.
+- Wi-Fi/BLE/NFC are not deep-sleep wake sources.
+- U3 is the black XFW-ETLIVE V602.
+- TX1 = XKT-412; RX1 = XKT-3168.
+- Addressable lighting = **14 physical SK6812 RGBW pixels, LED14–LED27**, mapped to 9 logical zones.
+- Bench arrangement follows `bench/BENCH-LAYOUT.md`.
 
-## Phase 0 — identify exact hardware before powered integration
+## Phase 0 — remaining nonpowered physical checks
 
-- Determine BT1 integral-protection status and verify discharge capability if documented.
-- Photograph RX1 front/back/coil; record pad labels and IC marking.
-- Record U2 dimensions if needed for layout; electrical pad labels are already verified.
-- Record U3 V602 dimensions/orientation in the intended hull location.
-- Determine SK6812 physical count/order.
-- Photograph/continuity-map SOT-23/SOT-23-5 carriers and protoboards.
+- determine BT1 integral-protection status;
+- continuity-map SOT-23/SOT-23-5 carriers before soldering;
+- inventory actual wire gauges/colors and passive stock;
+- measure hull/component locations for final W067+ distribution branches and wire lengths.
 
-## Phase 1 — battery/XIAO baseline
+The SK6812 count/order and major module identities are no longer Phase-0 unknowns.
 
-1. Connect only validated/protected BT1 path to U1.
-2. Verify normal boot and Wi-Fi/BLE.
-3. Measure active current.
-4. Enter deep sleep and measure standby current.
-5. Verify GPIO3/D1 wake with a safe 3.3 V source before RX1 divider hardware.
-6. Record boot/deep-sleep baseline current, battery voltage, firmware build, and wake cause.
+## Phase 1 — U1 baseline
 
-## Phase 2 — RX1 measurement before MCU sense connection
+1. power U1 from a validated/protected battery path or suitable bench source;
+2. verify normal boot and frozen GPIO mapping;
+3. verify Wi-Fi/BLE/OTA framework;
+4. measure active current;
+5. enter deep sleep and measure baseline standby current;
+6. verify D1/GPIO3 wake behavior with a safe logic source before integrated wireless test;
+7. record firmware build and wake cause.
 
-1. Power TX1 with verified supply.
-2. Measure RX1 unloaded output at several alignments/distances.
-3. Record highest raw receiver voltage.
-4. Load RX1 incrementally; record voltage/current/temperature.
-5. Verify polarity/pads.
-6. Confirm measured voltage envelope is compatible with R1/R2 before connecting `WLC_PRESENT` to U1.
+## Phase 2 — default-off control island
 
-## Phase 3 — D1 / XIAO charging and recovery
+1. build Q1/Q2/R3/R4 without U2 load;
+2. build Q7/Q8/R14–R16 without U3;
+3. build Q3–Q6 gate networks without LEDs;
+4. confirm all switched loads are hardware-default OFF with U1 reset/disconnected;
+5. verify `PERIPH_EN` controls Q1/Q7 paths as intended.
 
-1. Build RX1 -> D1 -> U1 5 V path with appropriate copper area.
-2. Verify D1 polarity.
-3. Verify U1 can run while BT1 is connected and wireless input is present.
-4. Verify BT1 charging behavior.
-5. Measure D1 drop/temperature during run + charge.
-6. Verify no reverse voltage/current at RX1 with TX1 absent.
-7. Simulate low-battery recovery without automatically applying full lighting load.
+## Phase 3 — U2 / switched 5 V
 
-## Phase 4 — WLC_PRESENT / approved wake workflow
+1. install U2 behind Q1;
+2. set U2 to 5.0 V before connecting LEDs;
+3. verify Q1 OFF state removes U2 input power;
+4. dummy-load at realistic battery voltages;
+5. record input/output current, voltage and temperature;
+6. record Q1 carrier drop/temperature;
+7. reinforce current path only if measurements justify it.
 
-After RX1 voltage is proven safe:
+## Phase 4 — U4 + one SK6812
 
-- build R1/R2;
-- measure `WLC_PRESENT` at measured min/nominal/max RX1 voltage;
-- confirm GPIO thresholds with margin;
-- confirm D1/GPIO3 wakes U1 from deep sleep;
-- verify the normal workflow: **sleeping ship -> apply/enable charging field -> ship wakes**;
-- run at least 50 wireless-on/off deep-sleep wake cycles;
-- verify Wi-Fi/BLE/NFC become available after wake;
-- ensure firmware does not create an immediate sleep/wake loop while `WLC_PRESENT` remains HIGH.
+1. continuity-check U4 carrier orientation;
+2. install U4 + C1=0.1 µF + R5=330 Ω;
+3. with +5 V rail OFF, verify U4 does not disturb D9/GPIO9 boot;
+4. perform repeated cold boots/resets;
+5. enable 5 V and verify level translation;
+6. connect LED14 only at conservative brightness;
+7. confirm correct DIN/DOUT orientation and no startup glitch.
 
-## Phase 5 — lighting high-side gate / MT3608
+## Phase 5 — full LED14–LED27 chain
 
-1. Build Q1/Q2/R3/R4 without load.
-2. Confirm hardware default OFF with MCU reset/disconnected.
-3. Verify `PERIPH_EN` controls Q1 cleanly.
-4. Install U2 behind Q1.
-5. Set U2 to 5.0 V before LEDs.
-6. Dummy-load at realistic LiPo voltages, including low battery.
-7. Measure input current/output voltage/temperature.
-8. Measure Q1 carrier voltage drop/temperature.
-9. Reinforce carrier current path if required.
-10. Confirm off-state current with Q1 open.
+Build in the exact frozen order from `LIGHTING-LAYOUT.md`:
 
-## Phase 6 — U4 and one SK6812
+`LED14 -> LED15 -> ... -> LED27`
 
-1. Build U4 on verified carrier.
-2. Add C1=0.1 µF at VCC/GND.
-3. Verify carrier orientation against datasheet.
-4. With +5 V rail OFF, confirm U4 does not disturb D9/GPIO9 boot.
-5. Perform repeated cold boots/resets with U4 attached/off.
-6. Set `SK_DATA_RAW` LOW before enabling 5 V.
-7. Verify 3.3 V -> 5 V translation.
-8. Add R5=330 Ω and one SK6812 at conservative brightness.
-9. Verify local pixel support components remain with the cut section.
-10. Check for startup glitches.
+Then:
 
-## Phase 7 — pulse phasers
+1. verify all 14 physical indices individually;
+2. verify P0–P8 logical grouping exactly;
+3. verify top/bottom deflector act together as P0;
+4. verify paired chillers/crystals act as their logical zones;
+5. exercise fades/animations without blocking behavior;
+6. measure current at several controlled global brightness levels;
+7. establish and record the final firmware current/brightness cap;
+8. validate C2/5 V rail stability;
+9. monitor U2/Q1/battery/wiring/LED temperatures.
 
-R6–R9 are already frozen at **150 Ω >=1/8 W**.
+## Phase 6 — pulse phasers
 
-Using one actual DiCUNO LED first:
+R6–R9 are frozen at 150 Ω >=1/8 W.
 
-1. determine polarity electrically;
-2. connect through 150 Ω from a controlled 5.0 V source;
-3. verify expected current is roughly 11–15 mA;
+1. determine one DiCUNO LED's polarity electrically;
+2. connect through 150 Ω from controlled 5.0 V;
+3. verify approximate 11–15 mA behavior;
 4. test one Q3-style switch channel;
-5. verify default OFF during reset/deep sleep;
+5. verify reset/deep-sleep default OFF;
 6. duplicate for Q4–Q6;
-7. test intended pulse sequences/no sleep glow.
+7. test independent, sequential, burst and all-phaser patterns.
 
-## Phase 8 — selected V602 power-off / boot test
+## Phase 7 — V602 power-off / boot test
 
-1. Confirm printed V602 header order: `SDA, SCK, MOSI, MISO, IRQ, GND, RST, 3V3`.
-2. With U3 rail OFF and SPI connected, measure V602 `3V3` relative to GND.
-3. Compare deep-sleep current with Phase-1 baseline.
-4. Check whether D6/D8/D10 source current into the unpowered V602.
-5. Verify R18 holds D0/GPIO2 safely high with V602 off.
-6. Perform at least 50 cold boot/reset cycles with V602 attached/off.
-7. Perform at least 50 deep-sleep -> WLC_PRESENT wake cycles.
-8. Stop and correct the specific interface if V602 back-powers or corrupts boot.
+1. confirm U3 header order;
+2. connect SPI and switched-power circuitry;
+3. leave U3 rail OFF and measure U3 3V3 relative to GND;
+4. compare deep-sleep current with Phase-1 baseline;
+5. check D6/D8/D10 backfeed into U3;
+6. verify R18 holds D0/GPIO2 safely high;
+7. perform at least 50 cold boot/reset cycles;
+8. determine whether R17 is required;
+9. stop and correct the interface if U3 back-powers or corrupts boot.
 
-## Phase 9 — V602 normal operation and charging coexistence
+## Phase 8 — V602 normal operation
 
-After Phase 8 passes:
+1. power U3 through Q7/Q8;
+2. verify stable switched 3.3 V;
+3. read a known tag repeatedly;
+4. record UID and firmware/version register if available;
+5. test intended read distance/orientation;
+6. test with lighting operating.
 
-- power V602 through Q7/Q8;
-- verify stable 3.3 V supply;
-- verify switched-power reset and determine whether R17 is required;
-- read a known tag repeatedly;
-- record firmware/version-register response if available;
-- verify explicit SPI pins;
-- test intended hull read distance;
-- test with lighting operating.
+## Phase 9 — integrated XKT / charging / wake
 
-### Required Q9-DNP coexistence test
+The XKT pair is treated as the selected 5 V / 2 A hardware. Characterization happens here rather than blocking design work.
 
-1. verify no Q9/W013/W053 inhibit connection is fitted;
-2. measure baseline V602 read distance/reliability with TX1 OFF;
-3. activate wireless charging at final-like coil alignment;
-4. repeat NFC reads at multiple tag positions/orientations;
-5. record any change in read distance, reliability, RX1/U3 temperature, or instability;
-6. add interference mitigation only if measured performance is unacceptable.
+1. confirm RX1 red/black polarity before permanent connection;
+2. observe unloaded/loaded receiver voltage at final-like alignment;
+3. connect RX1 -> D1 -> U1 charging/recovery path;
+4. verify charge/run behavior and D1 temperature/drop;
+5. verify no reverse feed toward RX1 with TX1 absent;
+6. connect R1/R2 `WLC_PRESENT` path;
+7. verify D1/GPIO3 wake;
+8. run at least 50 deep-sleep -> wireless-wake cycles;
+9. ensure firmware does not sleep/wake-loop while charging remains present;
+10. record coil alignment sensitivity and heating.
 
-## Phase 10 — full SK6812 chain / power envelope
+## Phase 10 — NFC while charging
 
-- assign LED14+ refs and remaining W-numbers;
-- verify physical emitters and P0–P8 mapping;
-- verify complete manufacturer pixel sections remain intact;
-- measure chain current at controlled brightness;
-- set safe firmware brightness/current envelope;
-- validate C2 and 5 V stability;
-- monitor U2/Q1/carrier/battery/wires/LED temperatures.
+1. establish baseline V602 read reliability with TX1 OFF;
+2. enable wireless charging at final-like geometry;
+3. repeat reads at multiple tag positions/orientations;
+4. record any read-distance/reliability change;
+5. monitor U3/RX1 temperature and instability;
+6. add mitigation only if a measured problem exists.
 
-## Phase 11 — integrated bench harness
+## Phase 11 — integrated bench endurance
 
-Run at least:
+Run:
 
 - battery cold boot;
 - boot with wireless power present;
 - battery/wireless transitions;
-- deep sleep -> wireless wake;
-- repeated sleep/wake cycles;
-- all lighting/phaser modes;
-- V602 NFC with charging OFF and ON;
+- repeated deep sleep/wake;
+- all 14-pixel lighting modes;
+- all phaser modes;
+- NFC with charging OFF and ON;
 - Wi-Fi/BLE control;
 - OTA;
-- repeated resets/power cycles;
+- repeated reset/power cycles;
 - sustained thermal/load test;
 - final deep-sleep current with all peripherals attached.
 
 ## Phase 12 — pre-close hull rehearsal
 
-- define final BAT+/GND/+5V/+3V3 distribution;
-- assign W-numbers to new distribution jumpers;
-- route/measure final harness;
-- verify no pinched wires;
-- verify high-current path margin;
-- verify charging through final hull;
-- verify V602 read distance through hull with charging OFF and ON;
-- verify RF/Wi-Fi/BLE;
-- verify lighting after light-blocking/paint;
+- place components per `MECHANICAL-LAYOUT.md`;
+- build final front/port/starboard power branches from `POWER-DISTRIBUTION.md`;
+- assign W067+ and measure final harness lengths;
+- verify no pinched wires or seam crossings;
+- dry-close the hull;
+- verify charging through hull;
+- verify V602 through hull with charging OFF and ON;
+- verify Wi-Fi/BLE;
+- verify lighting after interior light blocking/paint;
 - verify OTA again;
 - photograph every installed component/wire ID.
 
 ## Phase 13 — closure acceptance
 
-Do not seal until all drawing-release and pre-close tests pass, OTA/recovery works without routine USB/BOOT access, battery/electronics are secured/insulated, thermal limits are acceptable, final photos/wire data are committed, and final continuity/polarity/short checks pass.
+Do not seal until:
+
+- all release blockers are PASS;
+- OTA/recovery works without routine USB/BOOT access;
+- battery/electronics are secured and insulated;
+- thermal limits are acceptable;
+- final photos/wire data are committed;
+- final continuity/polarity/short checks pass.
