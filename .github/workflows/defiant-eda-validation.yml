@@ -26,26 +26,29 @@ jobs:
         run: python3 projects/defiant/eda/validate_connectivity.py
 
   kicad-native:
-    name: KiCad 10 native parse / ERC / export
+    name: KiCad 10 real connectivity / ERC / render
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install KiCad 10 stable and XML dependency
+      - name: Install KiCad 10 stable and helpers
         run: |
           sudo add-apt-repository --yes ppa:kicad/kicad-10.0-releases
           sudo apt-get update
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y kicad python3-lxml
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y kicad python3-lxml poppler-utils
           kicad-cli version
 
       - name: Validate source XML
         run: python3 projects/defiant/eda/validate_connectivity.py
 
+      - name: Regenerate KiCad from XML
+        run: python3 projects/defiant/eda/generate_kicad.py
+
       - name: Create report directory
         run: mkdir -p validation-output
 
-      - name: KiCad ERC
+      - name: KiCad ERC on complete flat schematic
         id: erc
         continue-on-error: true
         run: |
@@ -57,16 +60,33 @@ jobs:
             projects/defiant/kicad/USS-Defiant.kicad_sch \
             2>&1 | tee validation-output/erc-console.log
 
-      - name: Export KiCad PDF
+      - name: Export complete flat KiCad PDF
         id: pdf
         continue-on-error: true
         run: |
           kicad-cli sch export pdf \
-            -o validation-output/USS-Defiant-KiCad.pdf \
+            -o validation-output/USS-Defiant-Complete-Flat.pdf \
             projects/defiant/kicad/USS-Defiant.kicad_sch \
             2>&1 | tee validation-output/pdf-export.log
 
-      - name: Export KiCad XML netlist
+      - name: Export readable subsystem PDFs
+        id: subsystem_pdfs
+        continue-on-error: true
+        run: |
+          for s in power controller lighting phasers nfc; do
+            kicad-cli sch export pdf \
+              -o "validation-output/${s}.pdf" \
+              "projects/defiant/kicad/${s}.kicad_sch"
+          done
+          pdfunite \
+            validation-output/power.pdf \
+            validation-output/controller.pdf \
+            validation-output/lighting.pdf \
+            validation-output/phasers.pdf \
+            validation-output/nfc.pdf \
+            validation-output/USS-Defiant-Subsystems.pdf
+
+      - name: Export complete KiCad XML netlist
         id: netlist
         continue-on-error: true
         run: |
@@ -76,6 +96,14 @@ jobs:
             projects/defiant/kicad/USS-Defiant.kicad_sch \
             2>&1 | tee validation-output/netlist-export.log
 
+      - name: Cross-check KiCad netlist against source XML
+        id: crosscheck
+        continue-on-error: true
+        run: |
+          python3 projects/defiant/eda/validate_kicad_netlist.py \
+            validation-output/USS-Defiant-KiCad-netlist.xml \
+            2>&1 | tee validation-output/connectivity-crosscheck.log
+
       - name: Record validation summary
         if: always()
         run: |
@@ -83,16 +111,21 @@ jobs:
             echo "# Defiant KiCad Validation"
             echo
             echo "KiCad version: $(kicad-cli version 2>/dev/null || true)"
-            echo "ERC step outcome: ${{ steps.erc.outcome }}"
-            echo "PDF export outcome: ${{ steps.pdf.outcome }}"
+            echo "ERC outcome: ${{ steps.erc.outcome }}"
+            echo "Complete PDF outcome: ${{ steps.pdf.outcome }}"
+            echo "Subsystem PDFs outcome: ${{ steps.subsystem_pdfs.outcome }}"
             echo "Netlist export outcome: ${{ steps.netlist.outcome }}"
+            echo "XML-to-KiCad connectivity cross-check: ${{ steps.crosscheck.outcome }}"
             echo
-            if [ -f validation-output/defiant-erc.rpt ]; then
-              echo "## ERC report"
-              echo '```'
-              cat validation-output/defiant-erc.rpt
-              echo '```'
-            fi
+            echo "## Connectivity cross-check"
+            echo '```'
+            cat validation-output/connectivity-crosscheck.log 2>/dev/null || true
+            echo '```'
+            echo
+            echo "## ERC report"
+            echo '```'
+            cat validation-output/defiant-erc.rpt 2>/dev/null || true
+            echo '```'
           } | tee validation-output/VALIDATION-SUMMARY.md
 
       - name: Upload validation artifacts
@@ -101,11 +134,13 @@ jobs:
         with:
           name: defiant-kicad-validation
           path: validation-output/
-          if-no-files-found: warn
+          if-no-files-found: error
 
-      - name: Fail if KiCad could not parse/export or ERC found violations
+      - name: Fail if real connectivity or render validation failed
         if: always()
         run: |
           test "${{ steps.erc.outcome }}" = "success"
           test "${{ steps.pdf.outcome }}" = "success"
+          test "${{ steps.subsystem_pdfs.outcome }}" = "success"
           test "${{ steps.netlist.outcome }}" = "success"
+          test "${{ steps.crosscheck.outcome }}" = "success"
