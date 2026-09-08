@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<harness-topology project="USS Defiant 1/1000" revision="0.1">
+  <metadata>
+    <item key="connectivity-source" value="../eda/defiant-connectivity.xml" />
+    <item key="wire-source" value="../WIRE-LIST.md" />
+    <item key="status" value="functional harness topology frozen; exact lengths/colors/final gauges and W067+ distribution geometry remain open" />
+  </metadata>
+
+  <wire-classes>
+    <class id="PWR-A" description="main battery / boost high-current path" preferred-gauge="24 AWG" status="target" />
+    <class id="PWR-B" description="lighting and module power branches" preferred-gauge="26 AWG" status="target" />
+    <class id="SIG-A" description="SK6812 serial data" preferred-gauge="30 AWG" status="target" />
+    <class id="SIG-B" description="SPI, enable, gate and sense signals" preferred-gauge="30 AWG" status="target" />
+    <class id="PHASER" description="phaser LED leads / low-current sink wiring" preferred-gauge="factory lead or 30 AWG" status="target" />
+    <class id="DNP" description="superseded wire ID retained and never reused" preferred-gauge="N/A" status="dnp" />
+  </wire-classes>
+
+  <nodes>
+    <node id="J-BAT" name="Protected BAT+/GND distribution" region="central-control" status="physical-location-open" />
+    <node id="J-WLC" name="Wireless-power / wake junction" region="central-control" status="physical-location-open" />
+    <node id="J-5V" name="Switched +5V lighting distribution" region="central-control" status="physical-location-open" />
+    <node id="J-GND" name="Common system ground distribution" region="central-control" status="physical-location-open" />
+    <node id="J-3V3" name="Always-on 3.3V control distribution" region="central-control" status="physical-location-open" />
+  </nodes>
+
+  <branches>
+    <branch id="H-BAT" name="Battery / primary power" region="central" class="PWR-A">
+      <wire ref="W001" class="PWR-A" />
+      <wire ref="W002" class="PWR-A" />
+      <wire ref="W003" class="PWR-A" />
+      <wire ref="W004" class="PWR-A" />
+      <wire ref="W005" class="PWR-A" />
+      <wire ref="W006" class="PWR-A" />
+      <wire ref="W007" class="PWR-A" />
+      <wire ref="W014" class="PWR-A" />
+      <wire ref="W015" class="PWR-A" />
+      <wire ref="W016" class="PWR-A" />
+      <wire ref="W017" class="PWR-A" />
+    </branch>
+
+    <branch id="H-WLC" name="Wireless charging / wake" region="ventral-to-central" class="PWR-B">
+      <wire ref="W008" class="PWR-B" />
+      <wire ref="W009" class="PWR-B" />
+      <wire ref="W010" class="PWR-B" />
+      <wire ref="W011" class="SIG-B" />
+      <wire ref="W012" class="SIG-B" />
+      <wire ref="W013" class="DNP" />
+    </branch>
+
+    <branch id="H-CTRL" name="Lighting control / level shifter" region="central-control" class="SIG-B">
+      <wire ref="W018" class="SIG-B" />
+      <wire ref="W019" class="SIG-B" />
+      <wire ref="W020" class="SIG-B" />
+      <wire ref="W021" class="SIG-A" />
+      <wire ref="W022" class="SIG-A" />
+      <wire ref="W023" class="SIG-A" />
+      <wire ref="W024" class="PWR-B" />
+      <wire ref="W025" class="PWR-B" />
+      <wire ref="W026" class="PWR-B" />
+      <wire ref="W027" class="PWR-B" />
+    </branch>
+
+    <branch id="H-PHASER" name="Pulse phasers" region="central-to-phaser-apertures" class="PHASER">
+      <wire ref="W028" class="SIG-B" />
+      <wire ref="W029" class="SIG-B" />
+      <wire ref="W030" class="SIG-B" />
+      <wire ref="W031" class="SIG-B" />
+      <wire ref="W032" class="PHASER" />
+      <wire ref="W033" class="PHASER" />
+      <wire ref="W034" class="PHASER" />
+      <wire ref="W035" class="PHASER" />
+      <wire ref="W036" class="PHASER" />
+      <wire ref="W037" class="PHASER" />
+      <wire ref="W038" class="PHASER" />
+      <wire ref="W039" class="PHASER" />
+      <wire ref="W040" class="PHASER" />
+      <wire ref="W041" class="PHASER" />
+      <wire ref="W042" class="PHASER" />
+      <wire ref="W043" class="PHASER" />
+    </branch>
+
+    <branch id="H-NFC" name="NFC reader" region="central-to-dorsal" class="SIG-B">
+      <wire ref="W044" class="SIG-B" />
+      <wire ref="W045" class="SIG-B" />
+      <wire ref="W046" class="SIG-B" />
+      <wire ref="W047" class="SIG-B" />
+      <wire ref="W048" class="PWR-B" />
+      <wire ref="W049" class="PWR-B" />
+      <wire ref="W050" class="PWR-B" />
+      <wire ref="W051" class="SIG-B" />
+      <wire ref="W052" class="SIG-B" />
+      <wire ref="W053" class="DNP" />
+    </branch>
+
+    <branch id="H-SKDATA" name="SK6812 serial lighting data" region="front-port-aft-starboard" class="SIG-A">
+      <wire ref="W054" class="SIG-A" />
+      <wire ref="W055" class="SIG-A" />
+      <wire ref="W056" class="SIG-A" />
+      <wire ref="W057" class="SIG-A" />
+      <wire ref="W058" class="SIG-A" />
+      <wire ref="W059" class="SIG-A" />
+      <wire ref="W060" class="SIG-A" />
+      <wire ref="W061" class="SIG-A" />
+      <wire ref="W062" class="SIG-A" />
+      <wire ref="W063" class="SIG-A" />
+      <wire ref="W064" class="SIG-A" />
+      <wire ref="W065" class="SIG-A" />
+      <wire ref="W066" class="SIG-A" />
+    </branch>
+
+    <branch id="H-LIGHT-PWR-FUTURE" name="Final front / port / starboard +5V and GND branches" region="central-to-lighting" class="PWR-B" status="future">
+      <wire-range first="W067" status="reserved-for-hull-measurement" />
+    </branch>
+  </branches>
+
+  <endpoint-overrides>
+    <wire ref="W007" from="J-BAT.BAT+" to="Q1.2" />
+    <wire ref="W009" from="RX1.-" to="J-GND.GND" />
+    <wire ref="W011" from="J-WLC.WLC_5V_RAW" to="R1.1" />
+    <wire ref="W015" from="U2.VIN-" to="J-GND.GND" />
+    <wire ref="W016" from="U2.VOUT+" to="J-5V.+5V_LIGHT_SW" />
+    <wire ref="W017" from="U2.VOUT-" to="J-GND.GND" />
+    <wire ref="W019" from="Q2.3" to="Q1.1" />
+    <wire ref="W020" from="Q2.2" to="J-GND.GND" />
+    <wire ref="W024" from="J-5V.+5V_LIGHT_SW" to="U4.5" />
+    <wire ref="W025" from="U4.3" to="J-GND.GND" />
+    <wire ref="W026" from="J-5V.+5V_LIGHT_SW" to="LIGHTING-PWR-ENTRY.+5V" />
+    <wire ref="W027" from="LIGHTING-GND-ENTRY.GND" to="J-GND.GND" />
+    <wire ref="W034" from="Q3.2" to="J-GND.GND" />
+    <wire ref="W037" from="Q4.2" to="J-GND.GND" />
+    <wire ref="W040" from="Q5.2" to="J-GND.GND" />
+    <wire ref="W043" from="Q6.2" to="J-GND.GND" />
+    <wire ref="W049" from="U3.GND" to="J-GND.GND" />
+    <wire ref="W052" from="Q8.2" to="J-GND.GND" />
+  </endpoint-overrides>
+
+  <assembly-zones>
+    <zone id="Z-VENTRAL" name="Ventral wireless charging zone" members="RX1" />
+    <zone id="Z-CENTRAL" name="Central controller / power island" members="U1,U2,Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,U4,D1,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15,R16,R18,C1,C2" />
+    <zone id="Z-DORSAL" name="Dorsal NFC zone" members="U3" />
+    <zone id="Z-LIGHT" name="Hull lighting perimeter" members="LED14,LED15,LED16,LED17,LED18,LED19,LED20,LED21,LED22,LED23,LED24,LED25,LED26,LED27" />
+    <zone id="Z-PHASER" name="Phaser apertures" members="LED10,LED11,LED12,LED13" />
+  </assembly-zones>
+</harness-topology>
