@@ -43,6 +43,11 @@ ERC_FLAGS = [
         'note':'KiCad ERC marker: power reaches +3V3_NFC_SW through Q7; no physical part.',
         'pins':[{'number':'1','name':'PWR_FLAG','type':'power_out','side':'right','status':'active','net':'+3V3_NFC_SW'}],
     },
+    {
+        'ref':'PF4','part':'PWR_FLAG - ERC only','sheet':'power','status':'active','eda_only':'yes',
+        'note':'KiCad ERC marker: common GND is the system return/reference; no physical part.',
+        'pins':[{'number':'1','name':'PWR_FLAG','type':'power_out','side':'right','status':'active','net':'GND'}],
+    },
 ]
 
 
