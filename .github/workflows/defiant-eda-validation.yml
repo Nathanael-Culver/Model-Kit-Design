@@ -39,14 +39,19 @@ jobs:
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y kicad python3-lxml poppler-utils
           kicad-cli version
 
+      - name: Create report directory
+        run: mkdir -p validation-output/previews
+
       - name: Validate source XML
         run: python3 projects/defiant/eda/validate_connectivity.py
 
-      - name: Regenerate KiCad from XML
-        run: python3 projects/defiant/eda/generate_kicad.py
-
-      - name: Create report directory
-        run: mkdir -p validation-output
+      - name: Regenerate KiCad from XML with character-aware autolayout
+        id: generate
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python3 projects/defiant/eda/generate_kicad_autolayout.py \
+            2>&1 | tee validation-output/generator.log
 
       - name: KiCad ERC on complete flat schematic
         id: erc
@@ -80,6 +85,9 @@ jobs:
             kicad-cli sch export pdf \
               -o "validation-output/${s}.pdf" \
               "projects/defiant/kicad/${s}.kicad_sch"
+            pdftoppm -f 1 -singlefile -png -r 120 \
+              "validation-output/${s}.pdf" \
+              "validation-output/previews/${s}"
           done
           pdfunite \
             validation-output/power.pdf \
@@ -116,11 +124,17 @@ jobs:
             echo "# Defiant KiCad Validation"
             echo
             echo "KiCad version: $(kicad-cli version 2>/dev/null || true)"
+            echo "Generator/autolayout outcome: ${{ steps.generate.outcome }}"
             echo "ERC outcome: ${{ steps.erc.outcome }}"
             echo "Complete PDF outcome: ${{ steps.pdf.outcome }}"
             echo "Subsystem PDFs outcome: ${{ steps.subsystem_pdfs.outcome }}"
             echo "Netlist export outcome: ${{ steps.netlist.outcome }}"
             echo "XML-to-KiCad connectivity cross-check: ${{ steps.crosscheck.outcome }}"
+            echo
+            echo "## Generator / layout report"
+            echo '```'
+            cat validation-output/generator.log 2>/dev/null || true
+            echo '```'
             echo
             echo "## Connectivity cross-check"
             echo '```'
@@ -144,6 +158,7 @@ jobs:
       - name: Fail if real connectivity or render validation failed
         if: always()
         run: |
+          test "${{ steps.generate.outcome }}" = "success"
           test "${{ steps.erc.outcome }}" = "success"
           test "${{ steps.pdf.outcome }}" = "success"
           test "${{ steps.subsystem_pdfs.outcome }}" = "success"
