@@ -10,6 +10,11 @@ if len(sys.argv) != 2:
     raise SystemExit(2)
 NETLIST=Path(sys.argv[1])
 
+def norm_net(name):
+    # KiCad's XML netlist prefixes local flat-sheet labels with '/'.
+    # The semantic source stores the human net name without that hierarchy marker.
+    return name[1:] if name.startswith('/') else name
+
 src=ET.parse(SOURCE).getroot()
 kicad=ET.parse(NETLIST).getroot()
 
@@ -19,10 +24,9 @@ active_refs={ref for ref,c in source_components.items() if c.attrib.get('status'
 kc_components={c.attrib['ref']: c for c in kicad.findall('./components/comp')}
 missing=sorted(active_refs-set(kc_components))
 
-# Build (ref,pin)->net from KiCad export.
 kc_pin_net={}
 for net in kicad.findall('./nets/net'):
-    name=net.attrib.get('name','')
+    name=norm_net(net.attrib.get('name',''))
     for node in net.findall('node'):
         kc_pin_net[(node.attrib['ref'],node.attrib['pin'])]=name
 
@@ -44,8 +48,8 @@ for ref in sorted(active_refs):
         elif actual != expected:
             errors.append(f'{ref}:{p.attrib["number"]} {p.attrib["name"]}: KiCad={actual}, source={expected}')
 
-# Guard specifically against the previous false-positive condition where KiCad
-# successfully parsed a hierarchy containing zero electrical components.
+# This explicitly prevents the previous false-positive condition where KiCad
+# parsed a hierarchy whose electrical pages were effectively empty.
 if len(kc_components) < len(active_refs):
     errors.append(f'KiCad netlist contains only {len(kc_components)} components; source has {len(active_refs)} active components')
 if checked_pins == 0 or len(kc_pin_net) == 0:
