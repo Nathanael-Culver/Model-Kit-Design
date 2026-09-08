@@ -11,6 +11,17 @@ PROJECT='USS-Defiant'
 NS=uuid.UUID('9ac8ff9b-cf8e-4ea4-a2e1-5fa7d3d94f70')
 GRID=1.27
 
+# KiCad ERC electrical types occasionally need a modeling hint across a switch or
+# diode. These do NOT alter the semantic XML net/pin connectivity; they only tell
+# ERC which side of the already-defined path should be treated as a powered net.
+ERC_TYPE_OVERRIDES={
+    ('RX1','-'):'passive',       # return terminal, avoid multiple power-output GND drivers
+    ('U2','VOUT-'):'passive',    # return terminal
+    ('Q1','3'):'power_out',      # switched battery output -> U2 VIN+
+    ('D1','1'):'power_out',      # isolated wireless 5V output -> U1 5V/VBUS
+    ('Q7','3'):'power_out',      # switched 3V3 output -> U3
+}
+
 def U(tag): return str(uuid.uuid5(NS,tag))
 def esc(s): return str(s).replace('\\','\\\\').replace('"','\\"')
 def eff(sz=1.27,hide=False): return f'(effects (font (size {sz} {sz}))'+(' hide' if hide else '')+')'
@@ -47,7 +58,8 @@ def libdef(c):
     valid={'input','output','bidirectional','tri_state','passive','power_in','power_out','open_collector','open_emitter','no_connect','free'}
     for p in pins:
         side=p.get('side','left'); x=-12.70 if side=='left' else 12.70; ang=0 if side=='left' else 180
-        typ=p.get('type','passive'); typ=typ if typ in valid else 'passive'
+        typ=ERC_TYPE_OVERRIDES.get((c['ref'],p['number']),p.get('type','passive'))
+        typ=typ if typ in valid else 'passive'
         o.append(f'  (pin {typ} line (at {x} {yp[id(p)]:.2f} {ang}) (length 2.54) (name "{esc(p["name"])}" {eff(1.0)}) (number "{esc(p["number"])}" {eff(1.0)}))')
     o+=[' ))']; return lid,'\n'.join(o),yp,hh
 
@@ -66,10 +78,7 @@ def instance(c,lid,yp,hh,x,y,sch_uuid,tagbase):
     labs=[]
     for p in c['pins']:
         side=p.get('side','left'); px=x-12.70 if side=='left' else x+12.70
-        # KiCad library-symbol Y coordinates are inverted when transformed into the sheet.
         py=y-yp[id(p)]
-        # DNP/external components are visible documentation but do not participate
-        # in the active design's ERC/net connectivity.
         if c.get('status') in ('dnp','external') or p.get('status')=='nc':
             labs.append(nc(px,py,tagbase+':nc:'+p['number']))
         elif p.get('net'):
@@ -94,7 +103,7 @@ def make_standalone(key,comps):
     dx=52 if key=='lighting' else 62
     dy=42
     pos=layout_grid(prepared,40,42,cols,dx,dy)
-    o=['(kicad_sch',' (version 20250114)',' (generator "openai_model_kit_eda")',f' (uuid {sch_uuid})',' (paper "A3")',f' (title_block (title "USS Defiant - {key.title()}") (rev "2.1") (company "Model-Kit-Design"))',' (lib_symbols']
+    o=['(kicad_sch',' (version 20250114)',' (generator "openai_model_kit_eda")',f' (uuid {sch_uuid})',' (paper "A3")',f' (title_block (title "USS Defiant - {key.title()}") (rev "2.2") (company "Model-Kit-Design"))',' (lib_symbols']
     o += ['  '+d.replace('\n','\n  ') for d in defs]; o += [' )',f' (text "GENERATED FROM ../eda/defiant-connectivity.xml" (at 20 20 0) {eff()} (uuid {U("standalone:"+key+":banner")}))']
     for d,x,y in pos:
         c,lid,yp,hh=d
@@ -117,7 +126,7 @@ def make_flat(comps):
         'nfc':(520,280,4,62,45),
     }
     headers={'power':'POWER / CHARGING','controller':'CONTROLLER','phasers':'PHASERS','lighting':'ADDRESSABLE LIGHTING','nfc':'NFC'}
-    o=['(kicad_sch',' (version 20250114)',' (generator "openai_model_kit_eda")',f' (uuid {sch_uuid})',' (paper "A1")',' (title_block (title "USS Defiant 1/1000 - Complete Electrical Connectivity") (rev "2.1") (company "Model-Kit-Design"))',' (lib_symbols']
+    o=['(kicad_sch',' (version 20250114)',' (generator "openai_model_kit_eda")',f' (uuid {sch_uuid})',' (paper "A1")',' (title_block (title "USS Defiant 1/1000 - Complete Electrical Connectivity") (rev "2.2") (company "Model-Kit-Design"))',' (lib_symbols']
     o += ['  '+d.replace('\n','\n  ') for d in defs]; o += [' )']
     o.append(f' (text "CANONICAL FLAT CONNECTIVITY - generated from ../eda/defiant-connectivity.xml" (at 20 20 0) {eff(1.2)} (uuid {U("flat:banner")}))')
     for key,items in groups.items():
