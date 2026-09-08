@@ -2,7 +2,7 @@
 
 **Scale:** 1/1000  
 **Repository role:** canonical source of truth  
-**Current phase:** **Step 10b — validated semantic EDA / readable generated schematic**  
+**Current phase:** **Step 10d — validated schematic + VeSys-style harness baseline**  
 **Fabrication/closure gate:** **CLOSED**
 
 ## Workflow progress
@@ -22,9 +22,9 @@
 | 9b. Part/module physical identification | COMPLETE enough to proceed |
 | 9c. Physical placement / distribution concept | CONCEPT FROZEN; exact coordinates/lengths deferred |
 | 10a. Machine-readable EDA source | **CREATED — XML/XSD + semantic validator** |
-| 10b. KiCad generation / validation | **ACTIVE AND PASSING — KiCad 10 ERC + netlist cross-check + PDF render** |
+| 10b. KiCad generation / validation | **PASSING — KiCad 10 ERC + netlist cross-check + PDF render** |
 | 10c. Readable schematic presentation | **FLOW-AWARE + CHARACTER-AWARE + SELECTIVE DIRECT ROUTING IMPLEMENTED** |
-| 10d. VeSys-style harness database/renderer | NEXT after shared-rail/junction presentation |
+| 10d. VeSys-style harness database/renderer | **BASELINE IMPLEMENTED + CI VALIDATED** |
 | Bench development layout | DEFINED in `bench/BENCH-LAYOUT.md` |
 | Assembly sequence | DEFINED in `ASSEMBLY.md` |
 
@@ -38,13 +38,15 @@ Manual SVG/PDF schematics are no longer connectivity authority. The current flow
 4. canonical KiCad electrical-graph generation using `generate_kicad.py`;
 5. flow-aware / character-aware human-view generation using `generate_kicad_autolayout.py`;
 6. GitHub Actions installs KiCad 10 and runs native ERC, PDF export and XML netlist export;
-7. `validate_kicad_netlist.py` compares the KiCad-exported pin/net assignments back against source XML.
+7. `validate_kicad_netlist.py` compares KiCad-exported pin/net assignments back against source XML;
+8. `harness/harness-topology.xml` adds physical branch/bundle organization without changing connectivity;
+9. `harness/generate_harness.py` resolves every W001-W066 wire into a branch, class, net and two endpoints or an approved distribution-node override.
 
-See `eda/README.md` for the pipeline rules.
+See `eda/README.md` and `harness/README.md` for pipeline rules.
 
 ## Current EDA validation result
 
-Latest validated generator stage:
+Validated schematic baseline:
 
 - **59 KiCad objects** in the canonical flat model, including 4 explicitly EDA-only ERC power flags;
 - **178 connected KiCad pins**;
@@ -74,6 +76,34 @@ Current directly rendered paths include:
 - Q1 -> U2 `U2_VIN_SW`;
 - U4 -> R5 -> LED14 and all thirteen inter-pixel SK6812 data links;
 - R6–R9 -> LED10–LED13 and LED10–LED13 -> Q3–Q6.
+
+## VeSys-style harness baseline
+
+The new `harness/` layer now provides a physical-documentation model above the electrical graph.
+
+Current functional branches:
+
+| Branch | Purpose |
+|---|---|
+| `H-BAT` | battery / primary power / MT3608 path |
+| `H-WLC` | wireless charging and wake |
+| `H-CTRL` | lighting control / level-shifter interface |
+| `H-PHASER` | four phaser control/current paths |
+| `H-NFC` | V602 SPI and switched 3.3 V |
+| `H-SKDATA` | LED14 -> LED27 serial data path |
+| `H-LIGHT-PWR-FUTURE` | W067+ front/port/starboard +5 V/GND branches after hull measurement |
+
+Harness generation/CI currently confirms:
+
+- **66 permanent wire-ID records W001-W066**;
+- **64 active/conditional conductors**;
+- **2 permanent DNP IDs: W013 and W053**;
+- **0 unresolved active endpoints/nets**;
+- every active/conditional wire resolves to two physical endpoints or an approved distribution-node override;
+- wire schedule CSV/Markdown, endpoint matrix and functional harness overview are generated automatically;
+- harness overview PDF render: PASS.
+
+Wire color, routed/cut length and final gauge remain intentionally OPEN rather than guessed.
 
 ## Confirmed hardware
 
@@ -106,7 +136,7 @@ Data chain is frozen as LED14 -> ... -> LED27 using W054–W066. See `LIGHTING-L
 
 ## Important validation result
 
-**There are no unresolved static electrical ERROR items, and the current generated KiCad electrical graph passes native ERC and source-netlist comparison.**
+**There are no unresolved static electrical ERROR items, the generated KiCad electrical graph passes native ERC/source-netlist comparison, and all currently defined W001-W066 harness conductors resolve successfully.**
 
 That still does not replace the physical bench-validation items below.
 
@@ -123,8 +153,13 @@ That still does not replace the physical bench-validation items below.
 9. later: measure exact component/LED positions and assign W067+ distribution segments/lengths;
 10. OTA/control/integrated thermal testing before hull closure.
 
-## Immediate next EDA milestone
+## Immediate next engineering milestones
 
-Add deterministic rendering for selected **multi-drop/shared nets** using explicit rails, branch junctions and continuation labels without allowing wire/label/component collisions. Then extend the same semantic model with VeSys-style harness attributes: wire gauge, color, routed length, bundle/branch and splice data.
+Without requiring hull dimensions yet:
+
+1. continue modest schematic presentation cleanup — alignment, selected local two-pin routes, and eventually safe shared-rail/junction rendering;
+2. use the generated harness schedule as the baseline for bench wiring and carrier/protoboard planning;
+3. when hull dimensions are available, add W067+ physical lighting-power branches, bundle breakouts, wire colors and actual cut lengths;
+4. then move into the staged bench-validation sequence already defined in `TEST-PLAN.md` and `bench/BENCH-LAYOUT.md`.
 
 `VALIDATION.md` remains authoritative for hardware release blockers.
