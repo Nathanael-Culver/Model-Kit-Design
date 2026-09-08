@@ -26,14 +26,15 @@ jobs:
         run: python3 projects/defiant/eda/validate_connectivity.py
 
   kicad-native:
-    name: KiCad native parse / ERC / export
+    name: KiCad 10 native parse / ERC / export
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install KiCad and XML dependency
+      - name: Install KiCad 10 stable and XML dependency
         run: |
+          sudo add-apt-repository --yes ppa:kicad/kicad-10.0-releases
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y kicad python3-lxml
           kicad-cli version
