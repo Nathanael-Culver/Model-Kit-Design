@@ -1,6 +1,6 @@
-# USS Defiant KiCad Project
+# USS Defiant KiCad / Semantic EDA Project
 
-The KiCad schematic is **generated from semantic connectivity data**, not hand-drawn as the source of truth.
+The KiCad schematic is **generated from semantic connectivity data**, not hand-drawn as the electrical source of truth.
 
 Primary source:
 
@@ -9,74 +9,83 @@ Primary source:
 Generator / validation:
 
 - `../eda/validate_connectivity.py`
+- `../eda/validate_kicad_netlist.py`
 - `../eda/generate_kicad.py`
 - `../eda/defiant-connectivity.xsd`
+- `../../.github/workflows/defiant-eda-validation.yml`
 
-## Repository state
+## Current native validation state
 
-The repository keeps the machine-readable source, generator, project file, and hierarchical root schematic under version control.
+GitHub Actions now installs **KiCad 10** and performs a real generation / parse / ERC / export cycle.
 
-Run this from `projects/defiant/` to generate or refresh the complete KiCad hierarchy:
+Latest validated result (2026-09-07/08, run 10):
+
+- semantic XML/XSD validation: **PASS**;
+- generated complete KiCad schematic parses: **PASS**;
+- KiCad native ERC: **0 errors / 0 warnings** after documented ERC-only switched-power modeling hints;
+- KiCad PDF export: **PASS**;
+- KiCad XML netlist export: **PASS**;
+- source XML -> exported KiCad connectivity cross-check: **PASS**;
+- exported KiCad netlist contains **55 components and 174 connected pins**;
+- **164 active source pin/net assignments exactly match** the semantic XML.
+
+This cross-check exists specifically to prevent the earlier false-positive failure mode where KiCad successfully opened a hierarchy whose child pages contained no electrical objects.
+
+## Generated drawing model
+
+The generator now creates:
+
+- `USS-Defiant.kicad_sch` — one **complete flat electrical connectivity sheet** used for ERC and machine netlist comparison;
+- `power.kicad_sch` — standalone phone/readability view;
+- `controller.kicad_sch` — standalone controller view;
+- `lighting.kicad_sch` — standalone 14-pixel lighting view;
+- `phasers.kicad_sch` — standalone phaser view;
+- `nfc.kicad_sch` — standalone NFC view.
+
+The subsystem pages deliberately use simple block symbols and pin-attached net labels. They are **connectivity drawings**, not yet the polished conventional schematic presentation.
+
+## Regeneration
+
+Run from `projects/defiant/`:
 
 ```bash
 python eda/validate_connectivity.py
 python eda/generate_kicad.py
 ```
 
-That generates/refreshes:
+The GitHub Action performs the same regeneration automatically before native validation, so CI always validates the XML-generated design rather than trusting stale generated files.
 
-- `kicad/USS-Defiant.kicad_pro`
-- `kicad/USS-Defiant.kicad_sch`
-- `kicad/power.kicad_sch`
-- `kicad/controller.kicad_sch`
-- `kicad/lighting.kicad_sch`
-- `kicad/phasers.kicad_sch`
-- `kicad/nfc.kicad_sch`
+## Validation artifacts
 
-A complete generated package is also being provided in the engineering chat so it can be opened immediately without running the generator first.
+The GitHub Action publishes an artifact named `defiant-kicad-validation` containing:
 
-## First KiCad-open procedure
-
-1. Open `kicad/USS-Defiant.kicad_pro` in a current KiCad release.
-2. If KiCad offers to update/resave the generated schematic format, allow it.
-3. Inspect all five child sheets.
-4. Run **Electrical Rules Checker (ERC)**.
-5. Save/export the ERC report or capture the remaining errors/warnings.
-6. Do **not** use the project for fabrication until meaningful ERC findings are resolved or explicitly documented.
-
-## Current validation state
-
-The generator output has been checked for:
-
-- XML/XSD validity;
-- duplicate component/pin definitions;
-- active pins lacking a net;
-- required critical-net semantics;
-- JSON parseability of the `.kicad_pro` file;
-- balanced S-expressions/quotes in generated `.kicad_sch` files.
-
-**Native KiCad ERC has not been run in the generation environment because KiCad is not installed there.**
+- `USS-Defiant-Complete-Flat.pdf`
+- `USS-Defiant-Subsystems.pdf`
+- separate power/controller/lighting/phasers/NFC PDFs
+- `USS-Defiant-KiCad-netlist.xml`
+- `defiant-erc.rpt`
+- `connectivity-crosscheck.log`
+- `VALIDATION-SUMMARY.md`
 
 ## Why this workflow exists
 
-The earlier manually rendered SVG/PDF schematic attempts mixed two separate jobs:
+The earlier manually rendered SVG/PDF attempts mixed two jobs:
 
 1. deciding electrical connectivity;
 2. arranging a readable drawing.
 
-That made it possible for the picture to accidentally imply connections that were not intended.
+That allowed a visually plausible drawing to imply the wrong circuit.
 
-This workflow separates them. Component pins, nets, wire IDs, DNP/NC state, and functional grouping are stored as data first. KiCad is then a renderer/editor/ERC engine for that data.
+The new workflow separates them. Component pins, nets, wire IDs, DNP/NC state, and functional grouping are stored as machine-readable data first. KiCad then acts as a CAD renderer/editor/ERC engine.
 
-The same XML source can later be extended into a VeSys-style harness database with connector cavities, splices, wire gauge/color/length, bundles, branches, termination information, and physical harness coordinates. Harness SVG/PDF tables can then be generated from the same electrical source instead of redrawn independently.
+The same semantic source is intended to grow into a **VeSys-style harness model** containing connector cavities, splices, wire gauge/color/length, bundles, branches, termination data, and physical harness coordinates. Harness XML/SVG/PDF outputs can then be generated from the validated connectivity instead of redrawn independently.
 
-## Generation philosophy
+## Next refinement
 
-The first generated symbols are deliberately simple embedded block symbols. Connectivity correctness comes before cosmetic symbol quality.
+Connectivity validation is now functioning correctly. The next CAD work is presentation and harness modeling:
 
-Once the first KiCad open/ERC cycle succeeds, the next refinement is to:
-
-- replace selected blocks with polished custom symbols where useful;
-- make generated UUIDs deterministic so Git diffs remain clean;
-- add stronger automated cross-checks against `WIRE-LIST.md` and `DESIGNATORS.md`;
-- generate the physical harness drawing from the same XML model.
+- replace important generic blocks with polished electrical symbols where that improves readability;
+- keep the source XML and exported KiCad netlist automatically cross-checked;
+- cross-check XML against `WIRE-LIST.md` and `DESIGNATORS.md`;
+- extend the XML schema with harness branch/splice/termination fields;
+- generate a VeSys-like harness/connection drawing from the same validated model.
