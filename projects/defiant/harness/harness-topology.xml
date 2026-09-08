@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<harness-topology project="USS Defiant 1/1000" revision="0.2">
+<harness-topology project="USS Defiant 1/1000" revision="0.3">
   <metadata>
     <item key="connectivity-source" value="../eda/defiant-connectivity.xml" />
     <item key="wire-source" value="../WIRE-LIST.md" />
@@ -114,6 +114,10 @@
   </branches>
 
   <endpoint-overrides>
+    <wire ref="W003" from="BT1.+" to="U5.B+" />
+    <wire ref="W004" from="BT1.-" to="U5.B-" />
+    <wire ref="W005" from="U5.P+" to="U1.BAT+" />
+    <wire ref="W006" from="U5.P-" to="U1.BAT-" />
     <wire ref="W007" from="J-BAT.BAT+" to="Q1.2" />
     <wire ref="W009" from="RX1.-" to="J-GND.GND" />
     <wire ref="W011" from="J-WLC.WLC_5V_RAW" to="R1.1" />
