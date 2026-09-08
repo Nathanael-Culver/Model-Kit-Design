@@ -5,6 +5,7 @@ on:
     paths:
       - 'projects/defiant/eda/**'
       - 'projects/defiant/kicad/**'
+      - 'projects/defiant/harness/**'
       - '.github/workflows/defiant-eda-validation.yml'
   workflow_dispatch:
 
@@ -24,6 +25,35 @@ jobs:
 
       - name: Validate Defiant connectivity XML
         run: python3 projects/defiant/eda/validate_connectivity.py
+
+  harness-docs:
+    name: Harness topology / wire schedule
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install SVG/PDF renderer
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y librsvg2-bin
+
+      - name: Generate and validate harness documentation
+        run: |
+          python3 projects/defiant/harness/generate_harness.py
+          mkdir -p harness-output
+          cp projects/defiant/harness/generated/* harness-output/
+          rsvg-convert \
+            -f pdf \
+            -o harness-output/HARNESS-OVERVIEW.pdf \
+            projects/defiant/harness/generated/HARNESS-OVERVIEW.svg
+
+      - name: Upload harness artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: defiant-harness-documentation
+          path: harness-output/
+          if-no-files-found: error
 
   kicad-native:
     name: KiCad 10 real connectivity / ERC / render
