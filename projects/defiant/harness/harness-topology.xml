@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<harness-topology project="USS Defiant 1/1000" revision="0.1">
+<harness-topology project="USS Defiant 1/1000" revision="0.2">
   <metadata>
     <item key="connectivity-source" value="../eda/defiant-connectivity.xml" />
     <item key="wire-source" value="../WIRE-LIST.md" />
@@ -131,6 +131,7 @@
     <wire ref="W040" from="Q5.2" to="J-GND.GND" />
     <wire ref="W043" from="Q6.2" to="J-GND.GND" />
     <wire ref="W049" from="U3.GND" to="J-GND.GND" />
+    <wire ref="W051" from="Q8.3" to="Q7.1" />
     <wire ref="W052" from="Q8.2" to="J-GND.GND" />
   </endpoint-overrides>
 
