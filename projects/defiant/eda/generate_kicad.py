@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import xml.etree.ElementTree as ET
-import json, uuid
+import json, uuid, re
 
 BASE=Path(__file__).resolve().parent
 ROOT=BASE.parent
@@ -32,7 +32,9 @@ def libdef(c):
     pins=c['pins']; yp=ypos(pins)
     n=max(sum(p.get('side')=='left' for p in pins),sum(p.get('side')=='right' for p in pins),1)
     hh=max(5.08,(n-1)*1.27+2.54); hw=10.16
-    safe=c['part'].replace(' ','_').replace('/','_').replace('+','p').replace('-','_')[:28]
+    # KiCad library IDs are deliberately restricted to a conservative character set.
+    # Human-readable punctuation remains in the Value field instead.
+    safe=re.sub(r'[^A-Za-z0-9_]+','_',c['part']).strip('_')[:32] or 'Part'
     name=f'{c["ref"]}_{safe}'
     lid='Defiant:'+name
     prefix=''.join(ch for ch in c['ref'] if ch.isalpha()) or 'U'
@@ -50,8 +52,8 @@ def libdef(c):
     o+=[' ))']; return lid,'\n'.join(o),yp,hh
 
 def label(net,x,y,side,tag):
-    # Local labels are intentionally used on the complete flat schematic;
-    # same-name labels on that single sheet define the electrical net.
+    # Local labels are used on the complete flat schematic. Same-name labels on
+    # that single sheet are the electrical net; no visual line crossing is needed.
     ang=180 if side=='left' else 0
     return f'(label "{esc(net)}" (at {x:.2f} {y:.2f} {ang}) {eff(0.95)} (uuid {U(tag)}))'
 def nc(x,y,tag): return f'(no_connect (at {x:.2f} {y:.2f}) (uuid {U(tag)}))'
@@ -79,7 +81,7 @@ def layout_grid(comps, origin_x, origin_y, cols=4, dx=58, dy=45):
         positions.append((c,origin_x+col*dx,origin_y+row*dy))
     return positions
 
-def make_standalone(key,comps,page='1'):
+def make_standalone(key,comps):
     sch_uuid=U('standalone:'+key)
     defs=[]; prepared=[]
     for c in comps:
@@ -90,7 +92,7 @@ def make_standalone(key,comps,page='1'):
     pos=layout_grid(prepared,40,42,cols,dx,dy)
     o=['(kicad_sch',' (version 20250114)',' (generator "openai_model_kit_eda")',f' (uuid {sch_uuid})',' (paper "A3")',f' (title_block (title "USS Defiant - {key.title()}") (rev "2.0") (company "Model-Kit-Design"))',' (lib_symbols']
     o += ['  '+d.replace('\n','\n  ') for d in defs]; o += [' )',f' (text "GENERATED FROM ../eda/defiant-connectivity.xml" (at 20 20 0) {eff()} (uuid {U("standalone:"+key+":banner")}))']
-    for idx,(d,x,y) in enumerate(pos):
+    for d,x,y in pos:
         c,lid,yp,hh=d
         si,labs=instance(c,lid,yp,hh,x,y,sch_uuid,f'standalone:{key}:{c["ref"]}')
         o.append(' '+si.replace('\n','\n ')); o += [' '+q for q in labs]
@@ -117,7 +119,7 @@ def make_flat(comps):
     for key,items in groups.items():
         ox,oy,cols,dx,dy=regions[key]
         o.append(f' (text "{headers[key]}" (at {ox-10} {oy-15} 0) {eff(1.5)} (uuid {U("flat:header:"+key)}))')
-        for idx,(d,x,y) in enumerate(layout_grid(items,ox,oy,cols,dx,dy)):
+        for d,x,y in layout_grid(items,ox,oy,cols,dx,dy):
             c,lid,yp,hh=d
             si,labs=instance(c,lid,yp,hh,x,y,sch_uuid,f'flat:{c["ref"]}')
             o.append(' '+si.replace('\n','\n ')); o += [' '+q for q in labs]
@@ -126,10 +128,10 @@ def make_flat(comps):
 
 def main():
     comps=parse()
-    # Canonical complete flat schematic: this is what ERC/netlist comparison validates.
+    # Canonical complete flat schematic: ERC and XML/netlist comparison run here.
     flat,root_uuid=make_flat(comps)
     (K/'USS-Defiant.kicad_sch').write_text(flat,encoding='utf-8')
-    # Readable standalone subsystem views; not hierarchical dependencies.
+    # Standalone subsystem views are exported for easier phone review.
     for key in ('power','controller','lighting','phasers','nfc'):
         (K/f'{key}.kicad_sch').write_text(make_standalone(key,[c for c in comps if c['sheet']==key]),encoding='utf-8')
     pro={'board':{},'boards':[],'erc':{'erc_exclusions':[],'meta':{'version':0},'rule_severities':{'duplicate_reference':'error','pin_not_connected':'error','multiple_net_names':'error','unannotated':'error'}},'libraries':{'pinned_footprint_libs':[],'pinned_symbol_libs':[]},'meta':{'filename':'USS-Defiant.kicad_pro','version':1},'net_settings':{'classes':[{'name':'Default','clearance':0.2,'track_width':0.25,'via_diameter':0.8,'via_drill':0.4,'wire_width':6,'bus_width':12,'schematic_color':'rgba(0, 0, 0, 0.000)','pcb_color':'rgba(0, 0, 0, 0.000)'}],'meta':{'version':3},'net_colors':None,'netclass_assignments':None,'netclass_patterns':[]},'schematic':{'annotate_start_num':0,'meta':{'version':1},'page_layout_descr_file':'','plot_directory':''},'sheets':[[root_uuid,'Root']],'text_variables':{}}
