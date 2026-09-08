@@ -1,0 +1,110 @@
+name: Defiant EDA Validation
+
+on:
+  push:
+    paths:
+      - 'projects/defiant/eda/**'
+      - 'projects/defiant/kicad/**'
+      - '.github/workflows/defiant-eda-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-xml:
+    name: XML / semantic connectivity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XML validator dependency
+        run: python3 -m pip install --break-system-packages lxml
+
+      - name: Validate Defiant connectivity XML
+        run: python3 projects/defiant/eda/validate_connectivity.py
+
+  kicad-native:
+    name: KiCad native parse / ERC / export
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install KiCad and XML dependency
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y kicad python3-lxml
+          kicad-cli version
+
+      - name: Validate source XML
+        run: python3 projects/defiant/eda/validate_connectivity.py
+
+      - name: Create report directory
+        run: mkdir -p validation-output
+
+      - name: KiCad ERC
+        id: erc
+        continue-on-error: true
+        run: |
+          kicad-cli sch erc \
+            --severity-error \
+            --severity-warning \
+            --exit-code-violations \
+            -o validation-output/defiant-erc.rpt \
+            projects/defiant/kicad/USS-Defiant.kicad_sch \
+            2>&1 | tee validation-output/erc-console.log
+
+      - name: Export KiCad PDF
+        id: pdf
+        continue-on-error: true
+        run: |
+          kicad-cli sch export pdf \
+            -o validation-output/USS-Defiant-KiCad.pdf \
+            projects/defiant/kicad/USS-Defiant.kicad_sch \
+            2>&1 | tee validation-output/pdf-export.log
+
+      - name: Export KiCad XML netlist
+        id: netlist
+        continue-on-error: true
+        run: |
+          kicad-cli sch export netlist \
+            --format kicadxml \
+            -o validation-output/USS-Defiant-KiCad-netlist.xml \
+            projects/defiant/kicad/USS-Defiant.kicad_sch \
+            2>&1 | tee validation-output/netlist-export.log
+
+      - name: Record validation summary
+        if: always()
+        run: |
+          {
+            echo "# Defiant KiCad Validation"
+            echo
+            echo "KiCad version: $(kicad-cli version 2>/dev/null || true)"
+            echo "ERC step outcome: ${{ steps.erc.outcome }}"
+            echo "PDF export outcome: ${{ steps.pdf.outcome }}"
+            echo "Netlist export outcome: ${{ steps.netlist.outcome }}"
+            echo
+            if [ -f validation-output/defiant-erc.rpt ]; then
+              echo "## ERC report"
+              echo '```'
+              cat validation-output/defiant-erc.rpt
+              echo '```'
+            fi
+          } | tee validation-output/VALIDATION-SUMMARY.md
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: defiant-kicad-validation
+          path: validation-output/
+          if-no-files-found: warn
+
+      - name: Fail if KiCad could not parse/export or ERC found violations
+        if: always()
+        run: |
+          test "${{ steps.erc.outcome }}" = "success"
+          test "${{ steps.pdf.outcome }}" = "success"
+          test "${{ steps.netlist.outcome }}" = "success"
