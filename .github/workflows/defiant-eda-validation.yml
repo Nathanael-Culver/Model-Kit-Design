@@ -52,6 +52,7 @@ jobs:
         id: erc
         continue-on-error: true
         run: |
+          set -o pipefail
           kicad-cli sch erc \
             --severity-error \
             --severity-warning \
@@ -64,6 +65,7 @@ jobs:
         id: pdf
         continue-on-error: true
         run: |
+          set -o pipefail
           kicad-cli sch export pdf \
             -o validation-output/USS-Defiant-Complete-Flat.pdf \
             projects/defiant/kicad/USS-Defiant.kicad_sch \
@@ -73,6 +75,7 @@ jobs:
         id: subsystem_pdfs
         continue-on-error: true
         run: |
+          set -e
           for s in power controller lighting phasers nfc; do
             kicad-cli sch export pdf \
               -o "validation-output/${s}.pdf" \
@@ -90,6 +93,7 @@ jobs:
         id: netlist
         continue-on-error: true
         run: |
+          set -o pipefail
           kicad-cli sch export netlist \
             --format kicadxml \
             -o validation-output/USS-Defiant-KiCad-netlist.xml \
@@ -100,6 +104,7 @@ jobs:
         id: crosscheck
         continue-on-error: true
         run: |
+          set -o pipefail
           python3 projects/defiant/eda/validate_kicad_netlist.py \
             validation-output/USS-Defiant-KiCad-netlist.xml \
             2>&1 | tee validation-output/connectivity-crosscheck.log
