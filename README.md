@@ -6,6 +6,10 @@ Engineering source-of-truth repository for model-kit electronics, lighting, firm
 
 - `projects/defiant/` — 1/1000 USS Defiant electronics project
 
+## Collection inventory
+
+- `inventory/` — model-kit and paint collection inventory, with dedicated space reserved for future tool and supply tracking.
+
 ## Engineering rule
 
 Drawings are downstream artifacts. The authoritative order is:
